@@ -1,0 +1,16 @@
+# Staffing Match Dashboard dependencies
+
+# Matching engine (ai-staffing-matchmaker) is NOT a pip package.
+# - Local dev: resolved at runtime via sys.path (../AI-Staffing-Matchmaker)
+# - Docker/server: cloned to /ai-staffing-matchmaker in Dockerfile
+
+fastapi>=0.115
+uvicorn[standard]>=0.29
+pydantic>=2.0
+python-dotenv
+azure-cosmos>=4.5
+openai>=1.50
+
+# Dev / test
+pytest
+pytest-asyncio

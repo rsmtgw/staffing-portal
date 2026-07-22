@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bench Match Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --text: #e2e8f0;
+      --text-muted: #8892aa;
+      --excellent: #22c55e;
+      --good: #3b82f6;
+      --regular: #f59e0b;
+      --nomatch: #ef4444;
+      --overdue: #f97316;
+      --tag-bg: #2e3250;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 { font-size: 18px; font-weight: 700; color: var(--accent2); white-space: nowrap; }
+    .nav-links{display:flex;gap:16px;margin-left:auto;font-size:13px;}
+    .nav-links a{color:var(--text-muted);padding:4px 10px;border-radius:6px;border:1px solid transparent;text-decoration:none;}
+    .nav-links a:hover{color:var(--text);border-color:var(--border);text-decoration:none;}
+    .summary-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-left: 16px; }
+    .pill {
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border);
+    }
+    .pill.excellent { background: #14532d44; color: var(--excellent); border-color: var(--excellent)44; }
+    .pill.good      { background: #1e3a5f44; color: var(--good);      border-color: var(--good)44; }
+    .pill.regular   { background: #78350f44; color: var(--regular);   border-color: var(--regular)44; }
+    .pill.nomatch   { background: #3b1c1c44; color: var(--nomatch);   border-color: var(--nomatch)44; }
+    .pill.neutral   { background: var(--surface2); color: var(--text-muted); }
+    .pill.warn      { background: #7c2d1244; color: var(--overdue); border-color: var(--overdue)44; cursor: pointer; }
+
+    /* ── Controls ── */
+    .controls {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .ctrl-group { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
+    .ctrl-group label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .ctrl-group select, .ctrl-group input {
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 10px; font-size: 13px; outline: none;
+    }
+    .ctrl-group select:focus, .ctrl-group input:focus { border-color: var(--accent); }
+    .ctrl-group.wide { min-width: 240px; }
+    .btn {
+      padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-secondary { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+    .api-row {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .api-row input {
+      flex: 1; background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 10px; font-size: 12px; font-family: monospace;
+    }
+    .api-row input:focus { outline: none; border-color: var(--accent); }
+    .api-row label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    #status-bar {
+      font-size: 12px; color: var(--text-muted);
+      padding: 6px 24px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      min-height: 28px;
+    }
+
+    /* ── Main layout ── */
+    main { padding: 20px 24px; }
+    #results-count { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+
+    /* ── Demand card ── */
+    .demand-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .demand-card:hover { border-color: var(--accent)66; }
+    .demand-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .demand-header:hover { background: var(--surface2)88; }
+    .fit-badge {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .fit-badge.Excellent { background: var(--excellent); box-shadow: 0 0 6px var(--excellent)88; }
+    .fit-badge.Good      { background: var(--good);      box-shadow: 0 0 6px var(--good)88; }
+    .fit-badge.Regular   { background: var(--regular);   box-shadow: 0 0 6px var(--regular)88; }
+    .fit-badge.NoMatch   { background: var(--nomatch);   box-shadow: 0 0 6px var(--nomatch)88; }
+    .demand-title { font-size: 14px; font-weight: 600; flex: 1; }
+    .demand-role-id { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+    .demand-meta {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-left: auto;
+    }
+    .tag {
+      background: var(--tag-bg); color: var(--text-muted);
+      font-size: 11px; padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+    }
+    .tag.priority-Critical { background: #7f1d1d44; color: #fca5a5; }
+    .tag.priority-High     { background: #78350f44; color: #fcd34d; }
+    .tag.overdue           { background: #7c2d1244; color: var(--overdue); }
+    .tag.low-spec          { background: #44337a44; color: #a78bfa; }
+    .tag.mismatch          { background: #831843aa; color: #f9a8d4; }
+    .tag.capability        { background: #1e3a5f66; color: var(--good); }
+    .tag.copy              { background: var(--surface2); color: var(--text-muted); border: 1px dashed var(--border); }
+    .demand-skills { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 14px; }
+    .demand-skill-chip {
+      font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    }
+    .demand-skill-chip.secondary { background: #1e3a5f55; color: var(--good); }
+    .demand-skill-chip.other     { background: #44337a44; color: #a78bfa; }
+    .chevron { color: var(--text-muted); font-size: 12px; transition: transform .2s; }
+    .demand-card.open .chevron { transform: rotate(90deg); }
+
+    .demand-body { display: none; border-top: 1px solid var(--border); padding: 16px 18px; }
+    .demand-card.open .demand-body { display: block; }
+
+    .demand-info-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px; margin-bottom: 16px;
+    }
+    .info-cell { background: var(--surface2); border-radius: 6px; padding: 8px 12px; }
+    .info-cell .key { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+    .info-cell .val { font-size: 13px; font-weight: 500; }
+
+    /* ── Candidate rows ── */
+    .candidates-table { width: 100%; border-collapse: collapse; }
+    .candidates-table th {
+      font-size: 11px; color: var(--text-muted); text-align: left;
+      padding: 6px 10px; border-bottom: 1px solid var(--border);
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .candidates-table td { padding: 10px; border-bottom: 1px solid var(--border)55; vertical-align: top; }
+    .candidates-table tr:last-child td { border-bottom: none; }
+    .candidates-table tr:hover td { background: var(--surface2)66; }
+    .fit-label {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+    }
+    .fit-label.Excellent { color: var(--excellent); background: #14532d33; }
+    .fit-label.Good      { color: var(--good);      background: #1e3a5f33; }
+    .fit-label.Regular   { color: var(--regular);   background: #78350f33; }
+    .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .score-bar { height: 5px; border-radius: 3px; background: var(--border); width: 80px; overflow: hidden; flex-shrink: 0; }
+    .score-bar-fill { height: 100%; border-radius: 3px; }
+    .score-num { font-size: 13px; font-weight: 600; min-width: 40px; }
+    .skill-list { display: flex; flex-wrap: wrap; gap: 4px; }
+    .skill-chip {
+      font-size: 10px; padding: 1px 6px; border-radius: 3px;
+    }
+    .skill-chip.matched  { background: #14532d44; color: #86efac; }
+    .skill-chip.missing  { background: #7f1d1d44; color: #fca5a5; }
+    .rationale-text { font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
+
+    /* ── Totals footer in card ── */
+    .totals-row {
+      display: flex; gap: 12px; padding-top: 14px;
+      border-top: 1px solid var(--border); margin-top: 10px;
+      font-size: 12px; color: var(--text-muted);
+    }
+    .totals-row span { display: flex; align-items: center; gap: 4px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+    /* ── Alerts section ── */
+    .alerts { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .alert-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 18px; flex: 1; min-width: 220px;
+    }
+    .alert-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
+    .alert-card ul { list-style: none; font-size: 12px; }
+    .alert-card ul li { padding: 3px 0; border-bottom: 1px solid var(--border)44; }
+    .alert-card ul li:last-child { border-bottom: none; }
+    .alert-card.warn { border-color: var(--overdue)44; }
+    .alert-card.warn h3 { color: var(--overdue); }
+
+    /* ── Loading / error ── */
+    #loading { text-align: center; padding: 40px 60px; color: var(--text-muted); }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .8s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #progress-wrap {
+      width: 320px; max-width: 90%; margin: 12px auto 4px;
+      background: var(--border); border-radius: 4px; height: 6px; overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%; width: 0%; background: var(--accent);
+      border-radius: 4px; transition: width .25s ease;
+    }
+    #progress-label { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+    #error-box {
+      display: none; background: #7f1d1d33; border: 1px solid var(--nomatch)44;
+      color: #fca5a5; border-radius: 8px; padding: 14px 18px; margin: 20px 24px;
+      font-size: 13px;
+    }
+    /* ── Primary-match info icon & popover ── */
+    .pm-cell { display: flex; align-items: center; gap: 6px; }
+    .match-info-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #ffffff18; border: 1px solid #ffffff30;
+      color: var(--text-muted); font-size: 10px; font-style: normal;
+      cursor: pointer; flex-shrink: 0; line-height: 1;
+      transition: background .15s, color .15s;
+      font-family: serif;
+    }
+    .match-info-icon:hover { background: var(--accent)33; color: var(--accent2); border-color: var(--accent); }
+    .match-popover {
+      display: none; position: fixed; z-index: 2000;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px;
+      width: min(340px, 92vw); font-size: 12px; line-height: 1.55;
+      box-shadow: 0 8px 32px #00000066;
+      pointer-events: none;
+    }
+    .match-popover.visible { display: block; pointer-events: auto; }
+    .match-popover h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted); margin-bottom: 10px; }
+    .match-popover .mp-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: flex-start; }
+    .match-popover .mp-label { color: var(--text-muted); min-width: 80px; flex-shrink: 0; }
+    .match-popover .mp-val  { color: var(--text); font-weight: 500; word-break: break-word; }
+    .match-popover .mp-note {
+      margin-top: 10px; padding: 8px 10px; border-radius: 6px;
+      background: var(--surface2); font-size: 11px; color: var(--text-muted); line-height: 1.5;
+    }
+    .match-popover .mp-tag {
+      display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 3px;
+      border: 1px solid; margin-right: 4px;
+    }
+    .match-popover .mp-tag.exact    { color: var(--excellent); border-color: var(--excellent)66; background: #14532d22; }
+    .match-popover .mp-tag.equiv    { color: var(--regular);  border-color: var(--regular)66;  background: #78350f22; }
+    .match-popover .mp-tag.none     { color: var(--nomatch);  border-color: var(--nomatch)66;  background: #7f1d1d22; }
+    .match-popover .mp-tag.ai       { color: #93c5fd; border-color: #3b82f688; background: #1e40af22; }
+    .match-popover .mp-tag.llm-ok   { color: #86efac; border-color: #22c55e66; background: #14532d22; }
+    .match-popover .mp-tag.llm-rej  { color: #fca5a5; border-color: #ef444466; background: #7f1d1d22; }
+    .match-popover .mp-reject-item  { padding: 4px 0; border-bottom: 1px solid var(--border)44;
+      font-size: 11px; color: var(--text-muted); }
+    .match-popover .mp-reject-item:last-child { border-bottom: none; }
+
+    /* ── Match Explain Modal ── */
+    #explain-overlay {
+      display: none; position: fixed; inset: 0; background: #00000088;
+      z-index: 1000; align-items: center; justify-content: center;
+    }
+    #explain-overlay.open { display: flex; }
+    #explain-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; width: min(720px, 94vw); max-height: 88vh;
+      overflow-y: auto; padding: 28px 32px; position: relative;
+    }
+    #explain-modal h2 { font-size: 18px; margin-bottom: 18px; color: var(--accent2); }
+    .explain-section { margin-bottom: 20px; }
+    .explain-section h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted); margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .explain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .explain-kv {
+      font-size: 13px; padding: 6px 10px; border-radius: 0;
+    }
+    .explain-kv:nth-child(4n+1),
+    .explain-kv:nth-child(4n+2) { background: #ffffff07; }
+    .explain-kv:nth-child(4n+3),
+    .explain-kv:nth-child(4n+4) { background: transparent; }
+    .explain-kv .k { color: var(--text-muted); }
+    .explain-kv .v { color: var(--text); font-weight: 500; }
+    .explain-skills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .explain-pill {
+      font-size: 12px; padding: 3px 10px; border-radius: 20px; border: 1px solid;
+    }
+    .explain-pill.matched { color: var(--excellent); border-color: var(--excellent)55; background: #14532d33; }
+    .explain-pill.missing { color: var(--nomatch);  border-color: var(--nomatch)55;  background: #7f1d1d22; }
+    .explain-pill.primary-exact { color: var(--excellent); border-color: var(--excellent); font-weight: 700; }
+    .explain-pill.primary-equiv { color: var(--regular);  border-color: var(--regular);  font-weight: 700; }
+    .explain-pill.primary-none  { color: var(--nomatch);  border-color: var(--nomatch);  font-weight: 700; }
+    .score-explain { margin-top: 12px; }
+
+    /* ── Skill tier tables inside explain modal \u2014 alternating rows \u2500\u2500 */
+    #explain-modal table tr:nth-child(odd)  td { background: #ffffff07; }
+    #explain-modal table tr:nth-child(even) td { background: transparent; }
+    #explain-modal table tr td { padding: 5px 6px; border-radius: 0; }
+    #explain-modal table tr:first-child td { border-radius: 4px 4px 0 0; }
+    #explain-modal table tr:last-child  td { border-radius: 0 0 4px 4px; }
+    .score-explain-bar { height: 20px; background: var(--surface2); border-radius: 6px; overflow: hidden; margin-bottom: 4px; }
+    .score-explain-fill { height: 100%; border-radius: 6px; transition: width .4s; }
+    #explain-close {
+      position: absolute; top: 16px; right: 20px; background: none; border: none;
+      color: var(--text-muted); font-size: 22px; cursor: pointer; line-height: 1;
+    }
+    #explain-close:hover { color: var(--text); }
+
+    /* ── Interact Modal ── */
+    #interact-overlay {
+      display: none; position: fixed; inset: 0; background: #00000088;
+      z-index: 1000; align-items: center; justify-content: center;
+    }
+    #interact-overlay.open { display: flex; }
+    #interact-modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; width: min(880px, 96vw); max-height: 92vh;
+      overflow-y: auto; padding: 28px 32px; position: relative;
+    }
+    #interact-modal h2 { font-size: 18px; margin-bottom: 18px; color: var(--accent2); }
+    #interact-close {
+      position: absolute; top: 16px; right: 20px; background: none; border: none;
+      color: var(--text-muted); font-size: 22px; cursor: pointer; line-height: 1;
+    }
+    #interact-close:hover { color: var(--text); }
+    .interact-section { margin-bottom: 20px; }
+    .interact-section h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-muted); margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .skill-edit-row {
+      display: flex; align-items: center; gap: 8px; padding: 4px 0;
+      border-bottom: 1px solid var(--border)33; font-size: 13px;
+    }
+    .skill-edit-row .skill-name { flex: 1; color: var(--text); }
+    .skill-edit-row .skill-source { font-size: 10px; color: var(--text-muted); padding: 1px 6px; border-radius: 3px; background: var(--surface2); }
+    .skill-edit-row select {
+      background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 4px;
+      padding: 2px 6px; font-size: 12px;
+    }
+    .skill-edit-row .remove-skill {
+      background: none; border: none; color: var(--nomatch); cursor: pointer; font-size: 16px; padding: 0 4px;
+    }
+    .skill-edit-row .remove-skill:hover { color: #fca5a5; }
+    .add-skill-row { display: flex; gap: 8px; margin-top: 8px; }
+    .add-skill-row input {
+      flex: 1; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 10px; font-size: 13px;
+    }
+    .add-skill-row select {
+      background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 8px; font-size: 12px;
+    }
+    .interact-result { margin-top: 16px; padding: 14px; background: var(--surface2); border-radius: 8px; }
+    .interact-result .delta { font-size: 12px; margin-top: 4px; }
+    .interact-result .delta.positive { color: var(--excellent); }
+    .interact-result .delta.negative { color: var(--nomatch); }
+    .interact-result .delta.neutral { color: var(--text-muted); }
+    .interact-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+    .interact-actions .rating-group { display: flex; align-items: center; gap: 6px; }
+    .interact-actions .rating-group label { font-size: 12px; color: var(--text-muted); }
+    .interact-actions .star { cursor: pointer; font-size: 20px; color: var(--border); transition: color .1s; }
+    .interact-actions .star.active { color: #fbbf24; }
+    .interact-actions textarea {
+      flex: 1; min-width: 200px; background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 10px; font-size: 12px; resize: vertical; min-height: 36px;
+    }
+    .interact-toast {
+      position: fixed; bottom: 24px; right: 24px; background: var(--excellent); color: #fff;
+      padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      z-index: 2000; animation: fadeInUp .3s;
+    }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+<!-- Interact Modal -->
+<div id="interact-overlay" onclick="closeInteract(event)">
+  <div id="interact-modal">
+    <button id="interact-close" onclick="closeInteract()">&times;</button>
+    <div id="interact-content"></div>
+  </div>
+</div>
+
+<!-- Match Explain Modal -->
+<div id="explain-overlay" onclick="closeExplain(event)">
+  <div id="explain-modal">
+    <button id="explain-close" onclick="closeExplain()">&times;</button>
+    <div id="explain-content"></div>
+  </div>
+</div>
+
+<header>
+  <h1>🎯 Bench Match Dashboard</h1>
+   <nav class="nav-links">
+    <a href="/">Home</a>
+    <a href="/admin">Admin</a>
+    <a href="/manage/bench">Bench</a>
+    <a href="/manage/demand">Demand</a>
+    <a href="/logout" style="color:#ef4444">Logout</a>
+  </nav>
+  <div class="summary-pills" id="summary-pills">
+    <span class="pill neutral" id="pill-scored">— demands</span>
+    <span class="pill excellent" id="pill-excellent">—</span>
+    <span class="pill good" id="pill-good">—</span>
+    <span class="pill regular" id="pill-regular">—</span>
+    <span class="pill nomatch" id="pill-nomatch" style="display:none">—</span>
+    <span class="pill neutral" id="pill-bench">— candidates</span>
+    <span class="pill warn" id="alerts-toggle" style="display:none;" onclick="toggleAlerts()"></span>
+  </div>
+</header>
+
+<!-- Auto-load from /api/report/bench-matches -->
+<div class="api-row">
+  <label>Dashboard Data:</label>
+  <button class="btn btn-secondary" onclick="downloadReport()">📄 Download Report</button>
+  <span id="load-status" style="margin-left: 20px; color: #666; font-size: 0.9em;"></span>
+</div>
+
+<!-- Filters -->
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Fit Filter</label>
+    <select id="f-fit" onchange="currentPage=1; applyFilters()">
+      <option value="Excellent,Good,Regular">All Matched (E+G+R)</option>
+      <option value="Excellent,Good,Regular,No Match">All Demands (E+G+R+NM)</option>
+      <option value="No Match">No Match only</option>
+      <option value="Excellent,Good">Excellent + Good</option>
+      <option value="Excellent">Excellent only</option>
+      <option value="Good">Good only</option>
+      <option value="Regular">Regular only</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Capability</label>
+    <select id="f-cap" onchange="applyFilters()">
+      <option value="">All</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Priority</label>
+    <select id="f-priority" onchange="applyFilters()">
+      <option value="">All</option>
+      <option value="Critical">Critical</option>
+      <option value="High">High</option>
+      <option value="Normal">Normal</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Client</label>
+    <select id="f-client" onchange="applyFilters()">
+      <option value="">All Clients</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Career Level From</label>
+    <select id="f-cl-from" onchange="applyFilters()">
+      <option value="">Any</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Career Level To</label>
+    <select id="f-cl-to" onchange="applyFilters()">
+      <option value="">Any</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Overdue</label>
+    <select id="f-overdue" onchange="applyFilters()">
+      <option value="">All</option>
+      <option value="1">Overdue only</option>
+      <option value="0">Not overdue</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Industry</label>
+    <select id="f-industry" onchange="applyFilters()">
+      <option value="">All Industries</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Candidate</label>
+    <select id="f-candidate" onchange="applyFilters()">
+      <option value="">All Candidates</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Flags</label>
+    <select id="f-flags" onchange="applyFilters()">
+      <option value="">All</option>
+      <option value="low_specificity">Low Specificity</option>
+      <option value="is_copy">Copy Roles</option>
+      <option value="is_title_skill_mismatch">Title/Skill Mismatch</option>
+    </select>
+  </div>
+  <div class="ctrl-group wide">
+    <label>Search Role / Primary Skill</label>
+    <input id="f-search" type="text" placeholder="e.g. Java, Spring Boot..." oninput="applyFilters()" />
+  </div>
+  <div class="ctrl-group">
+    <label>Sort By</label>
+    <select id="f-sort" onchange="applyFilters()">
+      <option value="fit">Best Fit</option>
+      <option value="score">Score</option>
+      <option value="overdue">Overdue First</option>
+      <option value="priority">Priority</option>
+      <option value="role">Role Name</option>
+    </select>
+  </div>
+  <button class="btn btn-secondary" onclick="resetFilters()">✕ Reset</button>
+</div>
+
+<div id="status-bar">Ready. Enter an API URL or load a JSON file.</div>
+<div id="error-box"></div>
+
+<main>
+  <div id="loading" style="display:none">
+    <div class="spinner"></div>
+    <div id="progress-label">Contacting server…</div>
+    <div id="progress-wrap"><div id="progress-bar"></div></div>
+  </div>
+  <div id="alerts-section" style="display:none">
+    <div class="alerts" id="alerts-container"></div>
+  </div>
+  <div id="results-count"></div>
+  <div id="cards-container"></div>
+  <div id="pagination" style="display:none"></div>
+</main>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let allData = null;
+let filteredDemands = [];
+let currentPage = 1;
+const PAGE_SIZE = 20;
+
+// ── Progress helpers ─────────────────────────────────────────────────────────
+function setProgress(pct, label) {
+  const bar = document.getElementById('progress-bar');
+  const lbl = document.getElementById('progress-label');
+  if (bar) bar.style.width = Math.min(100, pct) + '%';
+  if (lbl) lbl.textContent = label || '';
+}
+let _progressTimer = null;
+function startIndeterminateProgress(label) {
+  setProgress(0, label || 'Scoring demands…');
+  let pct = 0;
+  _progressTimer = setInterval(() => {
+    pct = Math.min(85, pct + (85 - pct) * 0.04);
+    setProgress(pct, label || 'Scoring demands…');
+  }, 300);
+}
+function stopProgress() {
+  if (_progressTimer) { clearInterval(_progressTimer); _progressTimer = null; }
+  setProgress(100, 'Done');
+}
+
+// ── API Load ──────────────────────────────────────────────────────────────────
+async function loadData() {
+  // Always use hardcoded API endpoint — no manual configuration needed
+  const rawUrl = '/api/report/bench-matches';
+
+  // Build stream URL — SSE only carries progress signals, no data
+  let streamUrl = rawUrl;
+  try {
+    const base = window.location.origin + rawUrl;
+    const u = new URL(base);
+    u.searchParams.delete('fit_filter');
+    u.searchParams.delete('page');
+    u.searchParams.delete('page_size');
+    const streamPath = (rawUrl.startsWith('http') ? u.toString() : u.pathname + u.search)
+      .replace('/bench-matches', '/bench-matches/stream');
+    streamUrl = streamPath;
+  } catch {}
+
+  // Data URL — always fetch ALL demands so client-side filtering works
+  let dataUrl = rawUrl;
+  try {
+    const base = window.location.origin + rawUrl;
+    const u = new URL(base);
+    u.searchParams.set('fit_filter', 'Excellent,Good,Regular,No Match');
+    u.searchParams.set('page', '1');
+    u.searchParams.set('page_size', '9999');
+    dataUrl = rawUrl.startsWith('http') ? u.toString() : u.pathname + u.search;
+  } catch {}
+
+  setStatus('Loading…', 'loading');
+  showLoading(true);
+  setProgress(0, 'Connecting to server…');
+
+  // Close any previous EventSource
+  if (window._activeES) { window._activeES.close(); window._activeES = null; }
+
+  const es = new EventSource(streamUrl);
+  window._activeES = es;
+
+  async function fetchData() {
+    // After scoring is done, fetch the full result via normal HTTP (avoids 24MB SSE payload)
+    const resp = await fetch(dataUrl);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return resp.json();
+  }
+
+  es.onmessage = async (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'start') {
+        setProgress(2, 'Scoring demands…');
+      } else if (msg.type === 'progress') {
+        const pct = (msg.progress / msg.total) * 85 + 5;
+        setProgress(pct, `Scoring ${msg.progress} / ${msg.total} demands…`);
+      } else if (msg.type === 'done') {
+        stopProgress();
+        es.close();
+        window._activeES = null;
+        setProgress(95, 'Loading results…');
+        try {
+          const data = await fetchData();
+          processData(data);
+        } catch (fetchErr) {
+          showError('Failed to load results: ' + fetchErr.message);
+        }
+        showLoading(false);
+      } else if (msg.type === 'error') {
+        stopProgress();
+        es.close();
+        window._activeES = null;
+        showError('Scoring failed: ' + msg.message);
+        showLoading(false);
+      }
+    } catch (err) {
+      showError('Parse error: ' + err.message);
+    }
+  };
+
+  es.onerror = () => {
+    if (!window._activeES) return; // already closed normally
+    stopProgress();
+    es.close();
+    window._activeES = null;
+    showError('Connection lost. Please try again.');
+    showLoading(false);
+  };
+}
+
+// ── Data Processing ───────────────────────────────────────────────────────────
+function processData(data) {
+  hideError();
+  allData = data;
+  // Store the complete demand list once — applyFilters does all pagination
+  allData._allDemands = (data.demands || []).slice();
+  populateDropdowns(data);
+  updateSummaryPills(data);
+  renderAlerts(data);
+  currentPage = 1;
+  applyFilters();
+  const total = allData._allDemands.length;
+  setStatus(`Loaded ${total} demands · ${data.bench_size ?? '?'} bench candidates`, 'ok');
+}
+
+function populateDropdowns(data) {
+  // Use the full demand list for dropdown population (not just current page)
+  const demands = (data._allDemands || data.demands || []).slice();
+  const caps = [...new Set(demands.map(d => d.demand_capability).filter(Boolean))].sort();
+  const clients = [...new Set(demands.map(d => d.client).filter(Boolean))].sort();
+  const industries = [...new Set(demands.map(d => d.industry).filter(Boolean))].sort();
+  const candidates = [...new Set(demands.flatMap(d => d.candidates.map(c => c.name)).filter(Boolean))].sort();
+
+  // Career levels — extract numeric part for sorting, keep original labels
+  const clSet = [...new Set(demands.map(d => d.career_level).filter(Boolean))];
+  const clNumeric = (cl) => { const m = cl.match(/(\d+)/); return m ? parseInt(m[1], 10) : 999; };
+  clSet.sort((a, b) => clNumeric(a) - clNumeric(b));
+
+  fillSelect('f-cap', caps);
+  fillSelect('f-client', clients);
+  fillSelect('f-cl-from', clSet);
+  fillSelect('f-cl-to', clSet);
+  fillSelect('f-candidate', candidates);
+  fillSelect('f-industry', industries);
+}
+
+function fillSelect(id, values) {
+  const sel = document.getElementById(id);
+  const first = sel.options[0];
+  sel.innerHTML = '';
+  sel.appendChild(first);
+  values.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Filters (fully client-side, with client-side pagination) ─────────────────
+function applyFilters() {
+  if (!allData) return;
+  const fit       = document.getElementById('f-fit').value;
+  const cap       = document.getElementById('f-cap').value;
+  const priority  = document.getElementById('f-priority').value;
+  const client    = document.getElementById('f-client').value;
+  const clFrom    = document.getElementById('f-cl-from').value;
+  const clTo      = document.getElementById('f-cl-to').value;
+  const overdue   = document.getElementById('f-overdue').value;
+  const industry  = document.getElementById('f-industry').value;
+  const candidate = document.getElementById('f-candidate').value;
+  const flags     = document.getElementById('f-flags').value;
+  const search    = document.getElementById('f-search').value.trim().toLowerCase();
+  const sortBy    = document.getElementById('f-sort').value;
+
+  // Helper to extract numeric part from career level strings like "CL-9", "CL-10"
+  const clNumeric = (cl) => { const m = (cl || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : null; };
+  const clFromNum = clNumeric(clFrom);
+  const clToNum   = clNumeric(clTo);
+
+  // Always filter from the full demand list, not just the current page
+  let demands = (allData._allDemands || allData.demands || []).slice();
+
+  // Filter
+  demands = demands.filter(d => {
+    if (cap      && d.demand_capability !== cap) return false;
+    if (priority && d.priority !== priority) return false;
+    if (client   && d.client !== client) return false;
+    if (industry && d.industry !== industry) return false;
+    // Career level range filter
+    if (clFromNum != null || clToNum != null) {
+      const dNum = clNumeric(d.career_level);
+      if (dNum == null) return false;
+      if (clFromNum != null && dNum < clFromNum) return false;
+      if (clToNum != null && dNum > clToNum) return false;
+    }
+    if (overdue === '1' && !d.is_overdue) return false;
+    if (overdue === '0' && d.is_overdue) return false;
+    if (flags === 'low_specificity' && !d.low_specificity) return false;
+    if (flags === 'is_copy' && !d.is_copy) return false;
+    if (flags === 'is_title_skill_mismatch' && !d.is_title_skill_mismatch) return false;
+    if (search) {
+      const hay = (d.role + ' ' + d.primary_skill + ' ' + d.client + ' ' + d.role_id + ' ' + (d.industry || '') + ' ' + (d.secondary_skills || []).join(' ') + ' ' + (d.other_skills || []).join(' ')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    // Candidate-level fit filter (multi-value support e.g. "Excellent,Good,Regular,No Match")
+    const fitValues = fit ? fit.split(',').map(f => f.trim()) : null;
+    
+    if (fitValues && fitValues.length > 0) {
+      // Filter candidates by requested fit tiers (including No Match)
+      const cands = d.candidates.filter(c => {
+        if (fitValues && !fitValues.includes(c.fit)) return false;
+        if (candidate && c.name !== candidate) return false;
+        return true;
+      });
+      // Keep demand if it has matching candidates, or if it has no candidates and they're requesting No Match
+      if (cands.length === 0) {
+        if (!(fitValues.includes('No Match') && d.candidates.length === 0)) return false;
+      }
+    } else if (candidate) {
+      const cands = d.candidates.filter(c => c.name === candidate);
+      if (cands.length === 0) return false;
+    }
+    return true;
+  });
+
+  // Sort
+  const fitOrder = { Excellent: 0, Good: 1, Regular: 2 };
+  const prioOrder = { Critical: 0, High: 1, Normal: 2 };
+  demands.sort((a, b) => {
+    if (sortBy === 'fit') {
+      const aFit = Math.min(...a.candidates.map(c => fitOrder[c.fit] ?? 9));
+      const bFit = Math.min(...b.candidates.map(c => fitOrder[c.fit] ?? 9));
+      if (aFit !== bFit) return aFit - bFit;
+      const aScore = Math.max(...a.candidates.map(c => c.score_pct));
+      const bScore = Math.max(...b.candidates.map(c => c.score_pct));
+      return bScore - aScore;
+    }
+    if (sortBy === 'score') {
+      const aScore = Math.max(...a.candidates.map(c => c.score_pct));
+      const bScore = Math.max(...b.candidates.map(c => c.score_pct));
+      return bScore - aScore;
+    }
+    if (sortBy === 'overdue') {
+      if (a.is_overdue !== b.is_overdue) return b.is_overdue ? 1 : -1;
+    }
+    if (sortBy === 'priority') {
+      const pa = prioOrder[a.priority] ?? 9, pb = prioOrder[b.priority] ?? 9;
+      if (pa !== pb) return pa - pb;
+    }
+    if (sortBy === 'role') return a.role.localeCompare(b.role);
+    return 0;
+  });
+
+  filteredDemands = demands;
+
+  // Client-side pagination over the filtered result
+  const total = demands.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  currentPage = Math.min(currentPage, totalPages);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageSlice = demands.slice(start, start + PAGE_SIZE);
+
+  renderCards(pageSlice, fit, candidate);
+
+  const clientPag = { page: currentPage, total_pages: totalPages, total, page_size: PAGE_SIZE };
+  renderPagination(clientPag);
+
+  const shown = pageSlice.length;
+  const pageLabel = totalPages > 1 ? ` (page ${currentPage}/${totalPages})` : '';
+  document.getElementById('results-count').textContent =
+    `Showing ${shown} demand${shown !== 1 ? 's' : ''}${pageLabel} · ${total} matched · ${allData._allDemands ? allData._allDemands.length : total} total`;
+}
+
+function resetFilters() {
+  // Reset fit to "All Matched (E+G+R)" — index 0
+  document.getElementById('f-fit').selectedIndex = 0;
+  ['f-cap','f-priority','f-client','f-cl-from','f-cl-to','f-overdue','f-industry','f-candidate','f-flags','f-sort'].forEach(id => {
+    document.getElementById(id).selectedIndex = 0;
+  });
+  document.getElementById('f-search').value = '';
+  currentPage = 1;
+  loadData();
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+function renderPagination(pag) {
+  const el = document.getElementById('pagination');
+  if (!pag || pag.total_pages <= 1) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.style.cssText = 'display:flex;align-items:center;gap:8px;justify-content:center;padding:20px 0;flex-wrap:wrap;';
+
+  const { page, total_pages, total, page_size } = pag;
+  const btn = (label, p, disabled) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.className = 'btn ' + (p === page ? 'btn-primary' : 'btn-secondary');
+    b.disabled = disabled;
+    b.style.minWidth = '36px';
+    if (!disabled) b.onclick = () => { currentPage = p; applyFilters(); };
+    return b;
+  };
+
+  el.innerHTML = '';
+  el.appendChild(btn('«', 1, page === 1));
+  el.appendChild(btn('‹', page - 1, page === 1));
+
+  // Window of up to 7 page buttons around current
+  const start = Math.max(1, page - 3);
+  const end   = Math.min(total_pages, start + 6);
+  for (let p = start; p <= end; p++) el.appendChild(btn(String(p), p, false));
+
+  el.appendChild(btn('›', page + 1, page === total_pages));
+  el.appendChild(btn('»', total_pages, page === total_pages));
+
+  const info = document.createElement('span');
+  const from = (page - 1) * page_size + 1;
+  const to   = Math.min(page * page_size, total);
+  info.textContent = `${from}–${to} of ${total}`;
+  info.style.cssText = 'font-size:13px;color:var(--text-muted);margin-left:8px;';
+  el.appendChild(info);
+}
+
+// ── Render Cards ──────────────────────────────────────────────────────────────
+function renderCards(demands, fitFilter, candidateFilter) {
+  const container = document.getElementById('cards-container');
+  container.innerHTML = '';
+  if (!demands.length) {
+    container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px">No demands match the current filters.</p>';
+    return;
+  }
+
+  const fitValues = fitFilter ? fitFilter.split(',').map(f => f.trim()) : null;
+  const candidateFitValues = fitValues ? fitValues.filter(f => f !== 'No Match') : null;
+
+  // Render in async batches (5 per animation frame) to keep the browser responsive
+  let idx = 0;
+  function nextBatch() {
+    const end = Math.min(idx + 5, demands.length);
+    for (; idx < end; idx++) {
+      const d = demands[idx];
+      let cands = d.candidates;
+      if (candidateFitValues && candidateFitValues.length > 0) cands = cands.filter(c => candidateFitValues.includes(c.fit));
+      if (candidateFilter) cands = cands.filter(c => c.name === candidateFilter);
+
+      const bestFit = cands.length
+        ? ['Excellent','Good','Regular'].find(f => cands.some(c => c.fit === f)) || 'Regular'
+        : 'NoMatch';
+
+      const card = document.createElement('div');
+      card.className = 'demand-card';
+
+      const tags = [];
+      if (d.demand_capability) tags.push(`<span class="tag capability">${d.demand_capability}</span>`);
+      if (d.priority && d.priority !== 'Normal') tags.push(`<span class="tag priority-${d.priority}">${d.priority}</span>`);
+      if (d.is_overdue) tags.push('<span class="tag overdue">⏰ Overdue</span>');
+      if (d.low_specificity) tags.push('<span class="tag low-spec">◈ Low Spec</span>');
+      if (d.is_title_skill_mismatch) tags.push('<span class="tag mismatch">⚠ Title Mismatch</span>');
+      if (d.is_copy) tags.push('<span class="tag copy">Copy</span>');
+      if (d.career_level) tags.push(`<span class="tag">${d.career_level}</span>`);
+      if (d.location) tags.push(`<span class="tag">${d.location}</span>`);
+
+      const matchLabel = cands.length === 0 ? 'No matches' : `${cands.length} match${cands.length !== 1 ? 'es' : ''}`;
+      card.innerHTML = `
+        <div class="demand-header" onclick="toggleCard(this)">
+          <div class="fit-badge ${bestFit}"></div>
+          <div>
+            <div class="demand-title">${escHtml(d.role)}</div>
+            <div class="demand-role-id">${d.role_id} · ${escHtml(d.primary_skill || '—')}</div>
+          </div>
+          <div class="demand-meta">${tags.join('')}</div>
+          <div style="margin-left:12px;font-size:12px;color:var(--text-muted)">${matchLabel}</div>
+          <div class="chevron">▶</div>
+        </div>
+        <div class="demand-body">
+          <div class="demand-info-grid">
+            <div class="info-cell"><div class="key">Client</div><div class="val">${escHtml(d.client || '—')}</div></div>
+            <div class="info-cell"><div class="key">Primary Skill</div><div class="val">${escHtml(d.primary_skill || '—')}</div></div>
+            <div class="info-cell"><div class="key">Career Level</div><div class="val">${escHtml(d.career_level || '—')}</div></div>
+            <div class="info-cell"><div class="key">Capability</div><div class="val">${escHtml(d.demand_capability || '—')}</div></div>
+            <div class="info-cell"><div class="key">Location</div><div class="val">${escHtml(d.location || '—')}</div></div>
+            <div class="info-cell"><div class="key">Priority</div><div class="val">${escHtml(d.priority || '—')}</div></div>
+            <div class="info-cell"><div class="key">Industry</div><div class="val">${escHtml(d.industry || '—')}</div></div>
+            <div class="info-cell"><div class="key">Employee ID</div><div class="val">${escHtml(d.employee_id || '—')}</div></div>
+            <div class="info-cell"><div class="key">Practice</div><div class="val">${escHtml(d.practice || '—')}</div></div>
+          </div>
+          ${renderDemandSkills(d)}
+          ${renderCandidateTable(cands, d)}
+          ${renderTotalsRow(d.totals)}
+        </div>
+      `;
+      container.appendChild(card);
+    }
+    const pct = 80 + 20 * (idx / demands.length);
+    setProgress(pct, idx < demands.length ? `Rendering ${idx} / ${demands.length}…` : '');
+    if (idx < demands.length) requestAnimationFrame(nextBatch);
+    else setProgress(100, '');
+  }
+  requestAnimationFrame(nextBatch);
+}
+
+function renderDemandSkills(demand) {
+  const primary = demand.primary_skill ? [demand.primary_skill] : [];
+  const inferred = demand.inferred_skills || [];
+  const secondary = demand.secondary_skills || [];
+  const other = demand.other_skills || [];
+  
+  if (primary.length === 0 && inferred.length === 0 && secondary.length === 0 && other.length === 0) return '';
+  
+  let html = '<div class="demand-skills" style="display:flex; flex-direction:column; gap:8px">';
+  
+  if (primary.length > 0) {
+    const chips = primary.map(s => `<span class="demand-skill-chip" style="background:#14532d44;color:#86efac">${escHtml(s)}</span>`).join('');
+    html += `<div><span style="font-size:10px;color:var(--text-muted);font-weight:600;margin-right:6px">Primary:</span>${chips}</div>`;
+  }
+  if (inferred.length > 0) {
+    const chips = inferred.map(s => `<span class="demand-skill-chip" style="background:#1e40af44;color:#60a5fa">${escHtml(s)}</span>`).join('');
+    html += `<div><span style="font-size:10px;color:var(--text-muted);font-weight:600;margin-right:6px">Inferred:</span>${chips}</div>`;
+  }
+  if (secondary.length > 0) {
+    const chips = secondary.map(s => `<span class="demand-skill-chip secondary">${escHtml(s)}</span>`).join('');
+    html += `<div><span style="font-size:10px;color:var(--text-muted);font-weight:600;margin-right:6px">Secondary:</span>${chips}</div>`;
+  }
+  if (other.length > 0) {
+    const chips = other.map(s => `<span class="demand-skill-chip other">${escHtml(s)}</span>`).join('');
+    html += `<div><span style="font-size:10px;color:var(--text-muted);font-weight:600;margin-right:6px">Other:</span>${chips}</div>`;
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+function renderCandidateTable(candidates, demand) {
+  if (!candidates.length) return '<p style="color:var(--text-muted);font-size:13px">No candidates match current filters.</p>';
+  const currentDemand = demand || {};
+  const rows = candidates.map(c => {
+    const pct = c.score_pct ?? 0;
+    const color = c.fit === 'Excellent' ? 'var(--excellent)' : c.fit === 'Good' ? 'var(--good)' : 'var(--regular)';
+    const matchedChips = (c.matched_skills || []).map(s => `<span class="skill-chip matched">${escHtml(s)}</span>`).join('');
+    const missingChips = (c.missing_skills || []).map(s => `<span class="skill-chip missing">${escHtml(s)}</span>`).join('');
+    const pmIcon = c.primary_match === 'exact' ? '✓' : c.primary_match === 'equivalent' ? '~' : '✗';
+    const pmColor = c.primary_match === 'exact' ? 'var(--excellent)' : c.primary_match === 'equivalent' ? 'var(--regular)' : 'var(--nomatch)';
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:600;font-size:13px">${escHtml(c.name)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${escHtml(c.role || '')} · ${c.accenture_level || ''}</div>
+        </td>
+        <td><span class="fit-label ${c.fit}">${c.fit}</span></td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar"><div class="score-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+            <span class="score-num" style="color:${color}">${pct.toFixed(1)}%</span>
+          </div>
+        </td>
+        <td>
+          <div class="pm-cell">
+            <span style="color:${pmColor};font-size:13px;font-weight:700">${pmIcon}</span>
+            <i class="match-info-icon" tabindex="0"
+               data-candidate='${escAttr(JSON.stringify(c))}'
+               onclick="toggleMatchPopover(event, this)"
+               onkeydown="if(event.key==='Enter'||event.key===' ')toggleMatchPopover(event,this)"
+               title="How was this match determined?">i</i>
+          </div>
+        </td>
+        <td>
+          <div class="skill-list">${matchedChips}</div>
+        </td>
+        <td>
+          <div class="skill-list">${missingChips}</div>
+        </td>
+        <td style="white-space:nowrap"><button class="btn btn-secondary" style="font-size:11px;padding:3px 8px" onclick="showMatchExplain(this)" data-demand='${escAttr(JSON.stringify(currentDemand))}' data-candidate='${escAttr(JSON.stringify(c))}'>Why?</button> <button class="btn btn-primary" style="font-size:11px;padding:3px 8px" onclick="showInteract(this)" data-demand='${escAttr(JSON.stringify(currentDemand))}' data-candidate='${escAttr(JSON.stringify(c))}'>Interact</button></td>
+      </tr>
+    `;
+  }).join('');
+  return `
+    <table class="candidates-table">
+      <thead>
+        <tr>
+          <th>Candidate</th>
+          <th>Fit</th>
+          <th>Score</th>
+          <th>Primary</th>
+          <th>Matched Skills</th>
+          <th>Missing Skills</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renderTotalsRow(totals) {
+  if (!totals) return '';
+  return `
+    <div class="totals-row">
+      <span><span class="dot" style="background:var(--excellent)"></span> ${totals.excellent} Excellent</span>
+      <span><span class="dot" style="background:var(--good)"></span> ${totals.good} Good</span>
+      <span><span class="dot" style="background:var(--regular)"></span> ${totals.regular} Regular</span>
+      <span><span class="dot" style="background:var(--nomatch)"></span> ${totals.no_match} No Match</span>
+    </div>`;
+}
+
+// ── Alerts section ────────────────────────────────────────────────────────────
+function renderAlerts(data) {
+  const sec = document.getElementById('alerts-section');
+  const con = document.getElementById('alerts-container');
+  const toggleBtn = document.getElementById('alerts-toggle');
+  con.innerHTML = '';
+
+  const unmatch = data.unmatchable_candidates || [];
+  const overAlloc = data.over_allocated_candidates || [];
+  const totalAlerts = unmatch.length + overAlloc.length;
+
+  if (totalAlerts === 0) {
+    sec.style.display = 'none';
+    toggleBtn.style.display = 'none';
+    return;
+  }
+  
+  toggleBtn.style.display = '';
+  toggleBtn.innerHTML = `🔔 ${totalAlerts} Alerts`;
+  // Ensure section is hidden by default and let toggle manage it
+  sec.style.display = 'none';
+
+  if (unmatch.length) {
+    const card = document.createElement('div');
+    card.className = 'alert-card warn';
+    const rows = unmatch.map(c => {
+      const name = typeof c === 'string' ? c : (c.name || c.employee_id || '?');
+      const meta = typeof c === 'object'
+        ? [c.role, c.accenture_level, c.capability].filter(Boolean).join(' · ')
+        : '';
+      return `<li><strong>${escHtml(name)}</strong>${meta ? `<span style="color:var(--text-muted);margin-left:6px;font-size:11px">${escHtml(meta)}</span>` : ''}</li>`;
+    }).join('');
+    card.innerHTML = `<h3>⚠ Unmatchable Candidates (${unmatch.length})</h3><ul>${rows}</ul>`;
+    con.appendChild(card);
+  }
+
+  if (overAlloc.length) {
+    const card = document.createElement('div');
+    card.className = 'alert-card';
+    const rows = overAlloc.map(c => {
+      const name = typeof c === 'string' ? c : (c.name || c.employee_id || '?');
+      const meta = typeof c === 'object'
+        ? [c.role, c.capability, c.demand_count != null ? `${c.demand_count} demands` : ''].filter(Boolean).join(' · ')
+        : '';
+      return `<li><strong>${escHtml(name)}</strong>${meta ? `<span style="color:var(--text-muted);margin-left:6px;font-size:11px">${escHtml(meta)}</span>` : ''}</li>`;
+    }).join('');
+    card.innerHTML = `<h3>📊 Over-Allocated (≥3 demands)</h3><ul>${rows}</ul>`;
+    con.appendChild(card);
+  }
+}
+
+// ── Summary pills ─────────────────────────────────────────────────────────────
+function updateSummaryPills(data) {
+  const demands = data.demands || [];
+  const ex = demands.filter(d => d.candidates.some(c => c.fit === 'Excellent')).length;
+  const go = demands.filter(d => !d.candidates.some(c => c.fit === 'Excellent') && d.candidates.some(c => c.fit === 'Good')).length;
+  const re = demands.filter(d => d.candidates.length > 0 && d.candidates.every(c => c.fit === 'Regular')).length;
+  const nm = demands.filter(d => d.candidates.length === 0).length;
+  document.getElementById('pill-scored').textContent    = `${data.demands_scored ?? demands.length} demands`;
+  document.getElementById('pill-excellent').textContent = `✦ ${ex} Excellent`;
+  document.getElementById('pill-good').textContent      = `✦ ${go} Good`;
+  document.getElementById('pill-regular').textContent   = `✦ ${re} Regular`;
+  const nmPill = document.getElementById('pill-nomatch');
+  if (nm > 0) { nmPill.textContent = `✗ ${nm} No Match`; nmPill.style.display = ''; }
+  else { nmPill.style.display = 'none'; }
+  document.getElementById('pill-bench').textContent     = `${data.bench_size ?? '?'} candidates`;
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────────
+function toggleCard(header) {
+  header.closest('.demand-card').classList.toggle('open');
+}
+
+function setStatus(msg, type) {
+  const bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.style.color = type === 'loading' ? 'var(--accent2)' : type === 'error' ? 'var(--nomatch)' : 'var(--text-muted)';
+}
+
+function showLoading(v) {
+  document.getElementById('loading').style.display = v ? 'block' : 'none';
+}
+
+function showError(html) {
+  const box = document.getElementById('error-box');
+  box.innerHTML = '⚠ ' + html; box.style.display = 'block';
+  setStatus('Error loading data.', 'error');
+}
+
+function hideError() {
+  document.getElementById('error-box').style.display = 'none';
+}
+
+function escHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function escAttr(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+}
+
+// ── Report Generation Helpers ──────────────────────────────────────────────
+function formatScoringRationale(trace) {
+  // Format scoring_trace into match summary for CSV Comments column
+  // Shows matched skills and results without calculations
+  if (!trace) return '';
+  
+  const lines = [];
+  
+  // Primary skill match
+  if (trace.primary) {
+    lines.push(`Primary: "${trace.primary.skill}" [${trace.primary.match_path || 'match'}]`);
+  }
+  
+  // Secondary skills
+  if (trace.secondary && trace.secondary.length > 0) {
+    const secondaryList = trace.secondary.map(s => `"${s.skill}"`).join(', ');
+    lines.push(`Secondary: ${secondaryList}`);
+  }
+  
+  // Other skills (stated in the demand)
+  if (trace.other && trace.other.length > 0) {
+    const otherList = trace.other.map(s => `"${s.skill}"`).join(', ');
+    lines.push(`Other skills: ${otherList}`);
+  }
+  
+  // Inferred skills (AI-extracted from description)
+  if (trace.inferred && trace.inferred.length > 0) {
+    const inferredList = trace.inferred.map(s => `"${s.skill}"`).join(', ');
+    lines.push(`Inferred skills: ${inferredList}`);
+  }
+  
+  // Career level fit
+  if (trace.career_level_fit && trace.career_level_fit.result !== undefined) {
+    const clStatus = trace.career_level_fit.result ? 'Within range' : 'Outside range';
+    lines.push(`Career Level: ${clStatus}`);
+  }
+  
+  return lines.join(' | ');
+}
+
+function escapeCsvCell(cell) {
+  // Escape CSV cell - handle quotes, newlines, and control characters
+  let str = String(cell ?? '');
+  
+  // Remove control characters and junk bytes (keep only printable characters and newlines/tabs)
+  str = str.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F-\x9F]/g, '');
+  
+  // If contains comma, quote, or newline, wrap in quotes and escape quotes
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+function downloadReport() {
+  if (!filteredDemands || filteredDemands.length === 0) {
+    alert("No data available to download. Please load and filter data first.");
+    return;
+  }
+
+  const rows = [];
+  // 14-column enhanced report with demand metadata, candidate name, and fit tier
+  rows.push([
+    "Role_Id",
+    "Industry_Level_1",
+    "Client",
+    "Role_Title",
+    "Primary_Contact_Email",
+    "Career_Level_From",
+    "Career_Level_To",
+    "Employee_Id",
+    "Practice",
+    "Candidate_Name",
+    "Recommendation",
+    "Match_Percentage",
+    "Comments",
+    "Candidate_Career_Level"
+  ]); // Header
+
+  const fitFilter = document.getElementById('f-fit').value;
+  const candidateFilter = document.getElementById('f-candidate').value;
+  const fitValues = fitFilter ? fitFilter.split(',').map(f => f.trim()) : null;
+  const candidateFitValues = fitValues ? fitValues.filter(f => f !== 'No Match') : null;
+
+  filteredDemands.forEach(demand => {
+    let cands = demand.candidates;
+    if (candidateFitValues && candidateFitValues.length > 0) {
+        cands = cands.filter(c => candidateFitValues.includes(c.fit));
+    }
+    if (candidateFilter) {
+        cands = cands.filter(c => c.name === candidateFilter);
+    }
+    
+    if (cands.length === 0) {
+      // No matching candidates for this demand
+      if (demand.candidates.length === 0) {
+          rows.push([
+            demand.role_id || '',
+            demand.industry_level_1 || '',
+            demand.client || '',
+            demand.role || '',
+            demand.primary_contact || '',
+            demand.career_level_from || '',
+            demand.career_level_to || '',
+            demand.employee_id || '',
+            demand.practice || '',
+            '',
+            'No Match',
+            '',
+            'No matching candidates',
+            ''
+          ]);
+      }
+    } else {
+      cands.forEach(candidate => {
+        // Format scoring rationale from trace
+        let rationale = formatScoringRationale(candidate.scoring_trace);
+        // Candidate's Employee_ID from bench.csv
+        const empId = candidate.employee_id || '';
+        const practice = demand.practice || (demand.staffing_intake && demand.staffing_intake.practice) || '';
+        
+        rows.push([
+          demand.role_id || '',
+          demand.industry_level_1 || '',
+          demand.client || '',
+          demand.role || '',
+          demand.primary_contact || '',
+          demand.career_level_from || '',
+          demand.career_level_to || '',
+          empId,
+          practice,
+          candidate.name || '',
+          candidate.fit || '',
+          candidate.score_pct != null ? candidate.score_pct.toFixed(1) + '%' : '',
+          rationale,
+          candidate.accenture_level || ''
+        ]);
+      });
+    }
+  });
+
+  let csvContent = rows.map(e => e.map(escapeCsvCell).join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", "demand_matching_report.csv");
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
+// ── Match Explanation Modal ───────────────────────────────────────────────────
+function showMatchExplain(btn) {
+  const d = JSON.parse(btn.getAttribute('data-demand'));
+  const c = JSON.parse(btn.getAttribute('data-candidate'));
+  window._explainDemand = d;
+  window._explainCandidate = c;
+
+  const fitColor = c.fit === 'Excellent' ? 'var(--excellent)' : c.fit === 'Good' ? 'var(--good)' : c.fit === 'Regular' ? 'var(--regular)' : 'var(--nomatch)';
+  const pmLabel  = c.primary_match === 'exact' ? '✓ Exact match' : c.primary_match === 'equivalent' ? '~ Equivalent match' : '✗ No primary match';
+  const pmClass  = c.primary_match === 'exact' ? 'primary-exact' : c.primary_match === 'equivalent' ? 'primary-equiv' : 'primary-none';
+  const pct      = (c.score_pct ?? 0).toFixed(1);
+  const kv = (k, v) => `<div class="explain-kv"><span class="k">${k}: </span><span class="v">${escHtml(v || '—')}</span></div>`;
+  const inferredDemandSkills = (d.inferred_skills || []).map(s => (typeof s === 'string' ? s : (s && (s.skill || s.name)))).filter(Boolean);
+  const candidateSkillProfile = Array.isArray(c.candidate_skill_profile) ? c.candidate_skill_profile : [];
+  const candidateSkillsFromProfile = candidateSkillProfile
+    .map(x => {
+      const sk = (x && typeof x === 'object') ? (x.skill || x.name) : null;
+      const pf = (x && typeof x === 'object') ? x.proficiency : null;
+      return sk ? `${sk}${pf != null ? ` (P${pf})` : ''}` : null;
+    })
+    .filter(Boolean);
+  const candidateSkillsFlat = Array.isArray(c.candidate_skills) ? c.candidate_skills.filter(Boolean) : [];
+  const candidateSkillsDisplay = candidateSkillsFromProfile.length ? candidateSkillsFromProfile : candidateSkillsFlat;
+
+  // ── Build per-skill tier tables (aligned with AI-Staffing-Matchmaker) ──
+  function _skillTierTable(label, skills, weight) {
+    if (!skills || !skills.length) return '';
+    const matched = skills.filter(s => s.covered);
+    const missing = skills.filter(s => !s.covered);
+    const rows = skills.map(s => {
+      const isAI = s.ai_matched === true;
+      const icon = s.covered ? (isAI ? '⚡' : '✓') : '✗';
+      const color = s.covered ? (isAI ? 'var(--good)' : 'var(--excellent)') : 'var(--nomatch)';
+      const profLabel = s.proficiency_label || (s.covered ? 'found' : 'not found');
+      const pts = s.covered ? s.points?.toFixed(2) : '0';
+      const skillFormula = s.covered
+        ? (s.contribution_formula || `${s.base_weight ?? weight} x ${s.weight_bonus ?? 1} x ${s.cap_factor ?? 1} x ${tf.cap_multiplier ?? 1}`)
+        : '0 (not covered)';
+      const share = (s.covered && s.numerator_share_pct != null)
+        ? `${Number(s.numerator_share_pct).toFixed(1)}% of numerator`
+        : '';
+      const aiTag = isAI
+        ? `<span style="font-size:10px;background:#1e40af55;color:#93c5fd;border:1px solid #3b82f688;border-radius:3px;padding:1px 5px;margin-left:4px">AI match</span>`
+        : '';
+      return `<tr>
+        <td style="color:${color};font-weight:700;width:24px">${icon}</td>
+        <td>${escHtml(s.skill)}${aiTag}</td>
+        <td style="font-size:11px;color:var(--text-muted)">
+          <div>${escHtml(profLabel)}</div>
+          <div style="font-family:monospace;color:var(--text-muted)">${escHtml(skillFormula)}</div>
+          ${share ? `<div style="color:var(--text-muted)">${escHtml(share)}</div>` : ''}
+        </td>
+        <td style="text-align:right;font-family:monospace;font-size:12px">${pts}</td>
+      </tr>`;
+    }).join('');
+    const aiCount = skills.filter(s => s.ai_matched).length;
+    const aiNote = aiCount > 0
+      ? `<span style="font-size:10px;color:#93c5fd;margin-left:8px">⚡ ${aiCount} via AI</span>`
+      : '';
+    return `
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:4px">
+          ${escHtml(label)} (weight: ${weight}) — ${matched.length}/${skills.length} matched${aiNote}
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          ${rows}
+        </table>
+      </div>`;
+  }
+
+  // ── Primary skill detail ──
+  const t = (c.scoring_trace || {}) || {};
+  const tp = t.primary || {};
+  const pathMap = {
+    'exact-direct':         'Direct word match (P3+)',
+    'exact-alias':          'Formal alias → canonical (P3+)',
+    'exact-auto-canonical': 'Auto-stripped qualifier → exact (P3+)',
+    'equivalent-json':      'Equivalency table (skill_equivalencies.json)',
+    'equivalent-embedding': 'AI embedding similarity',
+    'equivalent-capability': 'Capability inference (GAP-040)',
+    'equivalent-ai-map':    'Upload-time AI semantic map',
+    'open-gate':            'No primary required',
+    'none':                 'No match found',
+  };
+  const primaryDetailHtml = tp.skill ? `
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:4px">
+        Primary Skill (weight: ${tp.weight || 2.0})
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr>
+          <td style="color:${tp.result === 'exact' ? 'var(--excellent)' : tp.result === 'equivalent' ? 'var(--regular)' : 'var(--nomatch)'};font-weight:700;width:24px">
+            ${tp.result === 'exact' ? '✓' : tp.result === 'equivalent' ? '~' : '✗'}
+          </td>
+          <td>${escHtml(tp.skill)}</td>
+          <td style="font-size:11px;color:var(--text-muted)">${escHtml(tp.proficiency_label || '—')}</td>
+          <td style="text-align:right;font-family:monospace;font-size:12px">${(tp.points || 0).toFixed(2)}</td>
+        </tr>
+        ${tp.match_path ? `<tr>
+          <td></td>
+          <td colspan="3" style="font-size:11px;padding:3px 0">
+            <span style="color:var(--text-muted)">Path:</span>
+            <strong style="color:${tp.match_path.startsWith('exact') ? 'var(--excellent)' : tp.match_path.startsWith('equiv') ? 'var(--regular)' : 'var(--nomatch)'}">
+              ${escHtml(pathMap[tp.match_path] || tp.match_path)}
+            </strong>
+          </td>
+        </tr>` : ''}
+        ${tp.match_detail ? `<tr>
+          <td></td>
+          <td colspan="3" style="font-size:11px;color:var(--text-muted);padding:2px 0">${escHtml(tp.match_detail)}</td>
+        </tr>` : ''}
+        ${tp.embedding_triggered_by ? `<tr>
+          <td></td>
+          <td colspan="3" style="font-size:11px;padding:2px 0">
+            <span style="color:var(--text-muted)">Triggered by:</span>
+            <span style="color:#93c5fd">⚡ ${escHtml(tp.embedding_triggered_by)}</span>
+            <span style="color:var(--text-muted);margin-left:6px">cosine ${tp.embedding_score ?? '—'}</span>
+          </td>
+        </tr>` : ''}
+        ${tp.llm_revalidated !== undefined && tp.llm_revalidated !== null ? `<tr>
+          <td></td>
+          <td colspan="3" style="font-size:11px;padding:2px 0">
+            <span style="color:var(--text-muted)">LLM check:</span>
+            <span style="color:${tp.llm_revalidated ? 'var(--excellent)' : 'var(--nomatch)'}">
+              ${tp.llm_revalidated ? '✓ confirmed' : '✗ rejected'}
+            </span>
+            ${tp.llm_reason ? `<span style="color:var(--text-muted);margin-left:6px">— ${escHtml(tp.llm_reason)}</span>` : ''}
+          </td>
+        </tr>` : ''}
+        ${(tp.embedding_rejections || []).length ? `<tr>
+          <td></td>
+          <td colspan="3" style="font-size:11px;color:var(--nomatch);padding:2px 0">
+            ${tp.embedding_rejections.length} AI match(es) rejected by LLM:
+            ${tp.embedding_rejections.map(r =>
+              `<div style="padding-left:8px;color:var(--text-muted)">✗ ${escHtml(r.candidate_skill)} (${r.embedding_score}) — ${escHtml(r.llm_reason||'')}</div>`
+            ).join('')}
+          </td>
+        </tr>` : ''}
+      </table>
+    </div>` : '';
+
+  // ── Career level detail ──
+  const tcl = t.career_level || {};
+  const clHtml = tcl.candidate ? `
+    <div style="font-size:12px;margin-bottom:10px;padding:8px 12px;background:var(--surface2);border-radius:6px">
+      <span style="color:var(--text-muted)">Career Level:</span>
+      Candidate <strong>${escHtml(String(tcl.candidate))}</strong> · Demand <strong>${escHtml(String(tcl.demand || '—'))}</strong>
+      ${tcl.diff != null ? ` · Diff: ${tcl.diff}` : ''}
+      <span style="color:${tcl.passed ? 'var(--excellent)' : 'var(--nomatch)'};margin-left:8px">${tcl.passed ? '✓ Pass' : '✗ Fail'}</span>
+    </div>` : '';
+
+  // ── Capability detail ──
+  const tcap = t.capability || {};
+  const hasDemandCapability = !!(tcap.demand_capability && String(tcap.demand_capability).trim());
+  const capHtml = hasDemandCapability ? `
+    <div style="font-size:12px;margin-bottom:10px;padding:8px 12px;background:var(--surface2);border-radius:6px">
+      <span style="color:var(--text-muted)">Capability:</span>
+      Candidate: <strong>${escHtml((tcap.candidate_caps||[]).join(', ') || '—')}</strong> ·
+      Demand: <strong>${escHtml(tcap.demand_capability || '—')}</strong> ·
+      <span style="color:var(--text-muted)">${escHtml(tcap.effect || '')}</span>
+    </div>` : '';
+
+  // ── Formula / score breakdown ──
+  const tf = t.formula || {};
+  const num = (v, d = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : d;
+  };
+
+  function _coveredSummary(rows, label) {
+    const req = rows || [];
+    if (!req.length) {
+      return {
+        sum: 0,
+        line: `${label} = 0.00 (no required skills)`
+      };
+    }
+    const covered = req.filter(r => r.covered);
+    if (!covered.length) {
+      return {
+        sum: 0,
+        line: `${label} = 0.00 (none covered)`
+      };
+    }
+    const terms = covered.map(r => {
+      const wb = num(r.weight_bonus, 1);
+      const cf = num(r.cap_factor, 1);
+      const val = wb * cf;
+      return `${r.skill}: ${wb.toFixed(2)} x ${cf.toFixed(2)} = ${val.toFixed(2)}`;
+    });
+    const sum = covered.reduce((acc, r) => acc + (num(r.weight_bonus, 1) * num(r.cap_factor, 1)), 0);
+    return {
+      sum,
+      line: `${label} = (${terms.join(' + ')}) = ${sum.toFixed(2)}`
+    };
+  }
+
+  const secCov = _coveredSummary(t.secondary, 'sec_covered');
+  const othCov = _coveredSummary(t.other, 'oth_covered');
+  const infCov = _coveredSummary(t.inferred, 'inf_covered');
+
+  const primaryWeight = num(tp.weight, 2.0);
+  const primaryBonus = num(tp.bonus_factor, 1.0);
+  const secWeight = num((t.secondary && t.secondary[0] && t.secondary[0].base_weight), 1.5);
+  const othWeight = num((t.other && t.other[0] && t.other[0].base_weight), 1.0);
+  const infWeight = num((t.inferred && t.inferred[0] && t.inferred[0].base_weight), 1.0);
+  const capMult = num(tf.cap_multiplier, 1.0);
+
+  const primaryTermCalc = primaryWeight * primaryBonus;
+  const secTermCalc = secWeight * secCov.sum;
+  const othTermCalc = othWeight * othCov.sum;
+  const infTermCalc = infWeight * infCov.sum;
+  const weightedBucketSum = secTermCalc + othTermCalc + infTermCalc;
+  const numeratorCalc = primaryTermCalc + (weightedBucketSum * capMult);
+  const denominatorCalc = num(tf.denominator, 0);
+
+  const coreFormulaDisplay = tf.display_core_formula_with_cap
+    || tf.display_core_formula_expanded
+    || tf.display_core_formula
+    || ((tf.numerator != null && tf.denominator != null)
+      ? `(${tf.numerator}) / ${tf.denominator}`
+      : (tf.expression || '—'));
+  const hasDetailedFormula = tf.display_core_formula || tf.primary_term != null;
+  const calcBreakdownHtml = hasDetailedFormula ? `
+    <div style="margin-top:8px;padding:8px 10px;background:var(--surface);border:1px solid #ffffff1a;border-radius:6px;font-family:monospace;font-size:11px;line-height:1.55">
+      <div style="color:var(--text-muted);font-family:inherit;margin-bottom:4px">Calculation Breakdown</div>
+      <div>${escHtml(secCov.line)}</div>
+      <div>${escHtml(othCov.line)}</div>
+      <div>${escHtml(infCov.line)}</div>
+      <div style="margin-top:6px">${escHtml(`numerator = (${primaryWeight.toFixed(1)} x ${primaryBonus.toFixed(2)}) + ((${secWeight.toFixed(1)} x ${secCov.sum.toFixed(2)}) + (${othWeight.toFixed(1)} x ${othCov.sum.toFixed(2)}) + (${infWeight.toFixed(1)} x ${infCov.sum.toFixed(2)})) x ${capMult.toFixed(2)}`)}</div>
+      <div>${escHtml(`= ${primaryTermCalc.toFixed(2)} + (${weightedBucketSum.toFixed(2)} x ${capMult.toFixed(2)}) = ${numeratorCalc.toFixed(3)}`)}</div>
+      <div style="margin-top:6px">${escHtml(`denominator = ${num(tf.denominator_parts?.primary, 0).toFixed(2)} + ${num(tf.denominator_parts?.secondary, 0).toFixed(2)} + ${num(tf.denominator_parts?.other, 0).toFixed(2)} + ${num(tf.denominator_parts?.inferred, 0).toFixed(2)} = ${denominatorCalc.toFixed(3)}`)}</div>
+      <div>${escHtml(`raw_uncapped = ${numeratorCalc.toFixed(3)} / ${denominatorCalc.toFixed(3)} = ${num(tf.score_raw_uncapped_pct ?? tf.score_raw_pct, 0).toFixed(1)}%`)}</div>
+      ${tf.single_skill_cap_applied ? `<div>${escHtml(`after_cap = min(${num(tf.score_raw_uncapped_pct ?? tf.score_raw_pct, 0).toFixed(1)}%, ${num(tf.single_skill_cap_value, 0).toFixed(1)}%) = ${num(tf.score_after_cap_pct ?? tf.score_raw_pct, 0).toFixed(1)}%`)}</div>` : ''}
+      ${tf.industry_bonus ? `<div>${escHtml(`final = ${num(tf.score_after_cap_pct ?? tf.score_raw_pct, 0).toFixed(1)}% + ${num(tf.industry_bonus, 0).toFixed(1)}% = ${num(tf.score_final_pct, 0).toFixed(1)}%`)}</div>` : ''}
+    </div>` : '';
+  const formulaHtml = (tf.expression || hasDetailedFormula) ? `
+    <div style="margin-top:10px;padding:10px 12px;background:var(--surface2);border-radius:6px;font-size:12px;font-family:monospace">
+      <div style="margin-bottom:4px;color:var(--text-muted)">Score Formula:</div>
+      <div><strong>Core Formula:</strong> ${escHtml(coreFormulaDisplay)}</div>
+      ${tf.expression && tf.expression !== coreFormulaDisplay ? `
+      <div style="margin-top:4px;color:var(--text-muted);font-family:inherit">
+        Symbolic: ${escHtml(tf.expression)}
+      </div>` : ''}
+      ${hasDetailedFormula ? `
+      <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap;font-family:inherit">
+        <span>Primary term: <strong>${tf.primary_term ?? '—'}</strong></span>
+        <span>Secondary term: <strong>${tf.secondary_term ?? '—'}</strong></span>
+        <span>Other term: <strong>${tf.other_term ?? '—'}</strong></span>
+        <span>Inferred term: <strong>${tf.inferred_term ?? '—'}</strong></span>
+        <span>Cap mult: <strong>${tf.cap_multiplier ?? '—'}</strong></span>
+      </div>
+      ${tf.denominator_parts ? `
+      <div style="margin-top:6px;font-family:inherit;color:var(--text-muted)">
+        Denominator parts: primary ${tf.denominator_parts.primary ?? 0} + secondary ${tf.denominator_parts.secondary ?? 0} + other ${tf.denominator_parts.other ?? 0} + inferred ${tf.denominator_parts.inferred ?? 0}
+      </div>` : ''}
+      ` : ''}
+      <div style="margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">
+        <span>Raw (uncapped): <strong>${(tf.score_raw_uncapped_pct ?? tf.score_raw_pct)}%</strong></span>
+        ${tf.single_skill_cap_applied ? `<span style="color:var(--regular)">After cap: <strong>${tf.score_after_cap_pct ?? tf.score_raw_pct}%</strong> (max ${tf.single_skill_cap_value}%)</span>` : ''}
+        ${tf.industry_bonus ? `<span style="color:var(--good)">Industry bonus: +${tf.industry_bonus}%</span>` : ''}
+        <span style="color:${fitColor}">Final: <strong>${tf.score_final_pct}%</strong></span>
+      </div>
+      ${calcBreakdownHtml}
+    </div>` : '';
+
+  // ── Classification applied ──
+  const tclass = t.classification || {};
+  const classHtml = tclass.threshold_applied ? `
+    <div style="font-size:12px;margin-top:8px;color:var(--text-muted)">
+      Threshold applied: <strong style="color:${fitColor}">${escHtml(tclass.threshold_applied)}</strong>
+    </div>` : '';
+
+  // ── Matched / Missing pills (always show from c.matched_skills + c.missing_skills) ──
+  const matchedPills = (c.matched_skills || []).map(s =>
+    `<span class="explain-pill matched">✓ ${escHtml(s)}</span>`).join('');
+  const missingPills = (c.missing_skills || []).map(s =>
+    `<span class="explain-pill missing">✗ ${escHtml(s)}</span>`).join('');
+
+  // ── Has detailed trace? ──
+  const hasTrace = !!(t.primary && t.primary.skill);
+
+  document.getElementById('explain-content').innerHTML = `
+    <h2>Match Explanation</h2>
+
+    <div class="explain-section">
+      <h3>Demand</h3>
+      <div class="explain-grid">
+        ${kv('Role ID', d.role_id)}
+        ${kv('Role Title', d.role)}
+        ${kv('Primary Skill', d.primary_skill)}
+        ${kv('Career Level', d.career_level)}
+        ${kv('Capability', d.demand_capability)}
+        ${kv('Client', d.client)}
+        ${kv('Industry', d.industry)}
+        ${kv('Priority', d.priority)}
+        ${kv('Location', d.location)}
+      </div>
+      <div style="margin-top:10px">
+        <div style="margin-bottom:4px"><span style="font-size:11px;color:var(--text-muted)">Secondary Skills:</span>
+          ${(d.secondary_skills || []).length
+            ? `<div class="explain-skills">${(d.secondary_skills || []).map(s => '<span class="explain-pill matched">' + escHtml(s) + '</span>').join('')}</div>`
+            : '<div style="font-size:12px;color:var(--text-muted)">None required</div>'}
+        </div>
+        <div style="margin-bottom:4px"><span style="font-size:11px;color:var(--text-muted)">Other Skills:</span>
+          ${(d.other_skills || []).length
+            ? `<div class="explain-skills">${(d.other_skills || []).map(s => '<span class="explain-pill matched" style="color:var(--accent2);border-color:var(--accent2)55">' + escHtml(s) + '</span>').join('')}</div>`
+            : '<div style="font-size:12px;color:var(--text-muted)">None required</div>'}
+        </div>
+        <div><span style="font-size:11px;color:var(--text-muted)">Inferred Skills:</span>
+          ${inferredDemandSkills.length
+            ? `<div class="explain-skills">${inferredDemandSkills.map(s => '<span class="explain-pill matched" style="color:#d8b4fe;border-color:#d8b4fe66">' + escHtml(s) + '</span>').join('')}</div>`
+            : '<div style="font-size:12px;color:var(--text-muted)">None required</div>'}
+        </div>
+      </div>
+    </div>
+
+    <div class="explain-section">
+      <h3>Candidate</h3>
+      <div class="explain-grid">
+        ${kv('Name', c.name)}
+        ${kv('Role', c.role)}
+        ${kv('Level', c.accenture_level)}
+      </div>
+      ${candidateSkillsDisplay.length ? `
+        <div style="margin-top:10px">
+          <span style="font-size:11px;color:var(--text-muted)">Candidate Skills:</span>
+          <div class="explain-skills">${candidateSkillsDisplay.map(s => '<span class="explain-pill matched">' + escHtml(String(s)) + '</span>').join('')}</div>
+        </div>` : '<p style="margin-top:10px;font-size:12px;color:var(--text-muted)">Candidate skills not available in payload.</p>'}
+    </div>
+
+    <div class="explain-section">
+      <h3>Match Result</h3>
+      ${clHtml}
+      ${capHtml}
+      <div class="explain-grid">
+        <div class="explain-kv"><span class="k">Fit Tier: </span>
+          <span style="color:${fitColor};font-weight:700">${c.fit}</span></div>
+        <div class="explain-kv"><span class="k">Score: </span>
+          <span style="color:${fitColor};font-weight:700">${pct}%</span></div>
+        <div class="explain-kv" style="grid-column:1/-1"><span class="k">Primary Skill Match: </span>
+          <span class="explain-pill ${pmClass}">${pmLabel} — ${escHtml(d.primary_skill)}</span>
+          ${tp.match_path ? `
+          <div style="margin-top:6px;font-size:11px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+            <span style="color:var(--text-muted)">How determined:</span>
+            <span style="font-weight:600;color:${tp.match_path.startsWith('exact') ? 'var(--excellent)' : tp.match_path.startsWith('equiv') ? 'var(--regular)' : 'var(--nomatch)'}">
+              ${escHtml(pathMap[tp.match_path] || tp.match_path)}
+            </span>
+            ${tp.embedding_triggered_by ? `
+              <span style="color:var(--text-muted)">— triggered by</span>
+              <span style="color:#93c5fd">⚡ ${escHtml(tp.embedding_triggered_by)}</span>
+              <span style="color:var(--text-muted)">(cosine ${tp.embedding_score ?? '—'})</span>
+            ` : ''}
+            ${tp.llm_revalidated !== undefined && tp.llm_revalidated !== null ? `
+              <span style="color:${tp.llm_revalidated ? 'var(--excellent)' : 'var(--nomatch)'}">
+                ${tp.llm_revalidated ? '✓ LLM confirmed' : '✗ LLM rejected'}
+              </span>
+            ` : ''}
+          </div>
+          ${tp.llm_reason ? `<div style="margin-top:3px;font-size:11px;color:var(--text-muted);font-style:italic">${escHtml(tp.llm_reason)}</div>` : ''}
+          ` : ''}
+        </div>
+      </div>
+      <div class="score-explain">
+        <div class="score-explain-bar">
+          <div class="score-explain-fill" style="width:${pct}%;background:${fitColor}"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted)">
+          Thresholds: Excellent ≥ 80% (exact primary) · Good ≥ 50% (exact) or ≥ 60% (equiv) · Regular ≥ 40%
+        </div>
+      </div>
+      ${classHtml}
+      ${formulaHtml}
+    </div>
+
+    <div class="explain-section">
+      <h3>Skill Breakdown</h3>
+      ${hasTrace ? `
+        ${primaryDetailHtml}
+        ${_skillTierTable('Secondary Skills', t.secondary, 1.5)}
+        ${_skillTierTable('Other Skills', t.other, 1.0)}
+        ${_skillTierTable('Inferred Skills', t.inferred, 1.0)}
+        ${!(t.secondary||[]).length && !(t.other||[]).length && !(t.inferred||[]).length && !primaryDetailHtml
+          ? '<p style="color:var(--text-muted);font-size:13px">Single-skill demand — no secondary/other/inferred skills required.</p>' : ''}
+      ` : `
+        ${matchedPills || missingPills ? `
+          ${matchedPills ? `<div style="margin-bottom:8px"><span style="font-size:12px;color:var(--text-muted)">Matched:</span><div class="explain-skills">${matchedPills}</div></div>` : ''}
+          ${missingPills ? `<div><span style="font-size:12px;color:var(--text-muted)">Missing from candidate:</span><div class="explain-skills">${missingPills}</div></div>` : ''}
+        ` : '<p style="color:var(--text-muted);font-size:13px">No skill detail available.</p>'}
+      `}
+    </div>
+
+    ${c.rationale ? `<div class="explain-section"><h3>Rationale</h3><p style="font-size:13px;line-height:1.6;white-space:pre-line">${escHtml(c.rationale)}</p></div>` : ''}
+
+    ${c.fit === 'No Match' && (t.audit_trail || t.career_level || t.primary) ? `
+      <div class="explain-section" style="background:#7f1d1d22;border:1px solid #ef444466;border-radius:8px;padding:12px;margin:12px 0">
+        <h3 style="color:var(--nomatch)">⚠ Rejection Analysis</h3>
+        ${t.audit_trail ? `
+          <div style="margin-bottom:10px">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">
+              <strong style="color:var(--nomatch)">Reason:</strong> ${escHtml(t.audit_trail.rejection_reason || '—')}
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">
+              <strong>Stage:</strong> ${escHtml(t.audit_trail.rejection_stage || '—')}
+            </div>
+            <div style="font-size:12px;color:var(--text-muted)">
+              <strong>Detail:</strong> ${escHtml(t.audit_trail.rejection_detail || '—')}
+            </div>
+            ${(t.audit_trail.attempted_matching_paths || []).length > 0 ? `
+              <div style="margin-top:8px;font-size:12px">
+                <strong style="color:var(--text-muted)">Attempted matching paths:</strong>
+                <ul style="margin:4px 0 0 16px;color:var(--text-muted);font-size:11px">
+                  ${t.audit_trail.attempted_matching_paths.map(p => `<li>${escHtml(p)}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+        ${t.career_level && !t.career_level.passed ? `
+          <div style="background:#00000033;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+            <div style="color:var(--nomatch);margin-bottom:4px">❌ Career Level Mismatch</div>
+            <div style="color:var(--text-muted)">
+              Candidate: <strong>${escHtml(String(t.career_level.candidate || '—'))}</strong> · 
+              Demand: <strong>${escHtml(String(t.career_level.demand || '—'))}</strong>
+            </div>
+            ${t.career_level.diff != null ? `
+              <div style="color:var(--nomatch);margin-top:4px">
+                Difference: ${t.career_level.diff} levels (tolerance: ±${t.career_level.tolerance || 1})
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+        ${t.primary && t.primary.result === 'none' ? `
+          <div style="background:#00000033;border-radius:4px;padding:8px;margin:8px 0;font-size:12px">
+            <div style="color:var(--nomatch);margin-bottom:4px">❌ Primary Skill Not Found</div>
+            <div style="color:var(--text-muted)">
+              Demand skill: <strong>${escHtml(t.primary.skill || '—')}</strong> ·
+              Min required: <strong>${escHtml(t.primary.min_required || '—')}</strong>
+            </div>
+            ${t.primary.candidate_skills_available && t.primary.candidate_skills_available.length > 0 ? `
+              <div style="margin-top:6px">
+                <span style="color:var(--text-muted);font-size:11px">Candidate has (${t.primary.candidate_skills_available.length}):</span>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px">
+                  ${t.primary.candidate_skills_available.slice(0, 5).map(s => 
+                    `<span style="font-size:10px;background:#ffffff11;border:1px solid #ffffff22;border-radius:3px;padding:2px 6px">${escHtml(s)}</span>`
+                  ).join('')}
+                  ${t.primary.candidate_skills_available.length > 5 ? `<span style="font-size:10px;color:var(--text-muted)">+ ${t.primary.candidate_skills_available.length - 5} more</span>` : ''}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+      </div>
+    ` : ''}
+
+    <div class="explain-section" id="ai-analyze-section">
+      <h3>🤖 AI Analysis</h3>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Re-evaluate this match using Gemini — no configuration files, raw AI judgment. Same scoring math applied for a fair comparison.</p>
+      <button class="btn btn-primary" id="ai-analyze-btn" onclick="runAiAnalyze()">🤖 Analyze with AI</button>
+      <div id="ai-analyze-result" style="margin-top:14px"></div>
+    </div>
+  `;
+
+  document.getElementById('explain-overlay').classList.add('open');
+}
+
+async function runAiAnalyze() {
+  const d = window._explainDemand;
+  const c = window._explainCandidate;
+  if (!d || !c) return;
+  const btn = document.getElementById('ai-analyze-btn');
+  const out = document.getElementById('ai-analyze-result');
+  if (!btn || !out) return;
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyzing…';
+  out.innerHTML = '';
+  try {
+    const resp = await fetch('/api/report/ai-analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        role_id: String(d.role_id),
+        employee_id: c.employee_id || null,
+        candidate_name: c.name || null,
+        candidate_role: c.role || null,
+      }),
+    });
+    if (!resp.ok) { const e = await resp.text(); throw new Error(e); }
+    const data = await resp.json();
+    out.innerHTML = _renderAiAnalysis(data);
+  } catch(e) {
+    out.innerHTML = `<p style="color:var(--nomatch);font-size:13px">Error: ${escHtml(e.message)}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🤖 Analyze with AI';
+  }
+}
+
+function _renderAiAnalysis(data) {
+  const r = data.rule_result || {};
+  const a = data.ai_result || {};
+  const diff = data.diff || [];
+  const fitColor = s => s === 'Excellent' ? 'var(--excellent)' : s === 'Good' ? 'var(--good)' : s === 'Regular' ? 'var(--regular)' : 'var(--nomatch)';
+  const scoreDelta = ((a.score_pct || 0) - (r.score_pct || 0)).toFixed(1);
+  const deltaSign = scoreDelta > 0 ? '+' : '';
+  const deltaColor = scoreDelta > 0 ? 'var(--excellent)' : scoreDelta < 0 ? 'var(--nomatch)' : 'var(--text-muted)';
+
+  let html = `
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="flex:1;min-width:140px;background:var(--surface2);border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Rule-based (current)</div>
+        <div style="font-size:20px;font-weight:700;color:${fitColor(r.fit)}">${escHtml(r.fit || '—')}</div>
+        <div style="font-size:14px;color:${fitColor(r.fit)}">${r.score_pct != null ? r.score_pct + '%' : '—'}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Primary: ${escHtml(r.primary_match || '—')}</div>
+      </div>
+      <div style="font-size:24px;color:var(--text-muted);align-self:center">→</div>
+      <div style="flex:1;min-width:140px;background:var(--surface2);border-radius:8px;padding:12px;border:1px solid #7c3aed44">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">AI Assessment (Gemini)</div>
+        <div style="font-size:20px;font-weight:700;color:${fitColor(a.fit)}">${escHtml(a.fit || '—')}</div>
+        <div style="font-size:14px;color:${fitColor(a.fit)}">${a.score_pct != null ? a.score_pct + '%' : '—'} <span style="font-size:12px;color:${deltaColor}">(${deltaSign}${scoreDelta}%)</span></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Primary: ${escHtml(a.primary_match || '—')}${a.primary_via ? ' via <em>' + escHtml(a.primary_via) + '</em>' : ''}</div>
+      </div>
+    </div>`;
+
+  if (a.primary_reasoning) {
+    html += `<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-style:italic">Primary reasoning: ${escHtml(a.primary_reasoning)}</div>`;
+  }
+
+  if (diff.length) {
+    html += `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:#f59e0b;margin-bottom:6px">⚡ ${diff.length} difference${diff.length > 1 ? 's' : ''} from rule-based scoring</div><table style="width:100%;font-size:12px;border-collapse:collapse">`;
+    html += `<tr style="color:var(--text-muted)"><th style="text-align:left;padding:3px 6px">Tier</th><th style="text-align:left;padding:3px 6px">Skill</th><th style="text-align:left;padding:3px 6px">Rule</th><th style="text-align:left;padding:3px 6px">AI</th><th style="text-align:left;padding:3px 6px">AI via</th></tr>`;
+    for (const d of diff) {
+      const ruleCol = d.rule === 'matched' || d.rule === 'exact' || d.rule === 'equivalent' ? `<span style="color:var(--excellent)">✓ ${escHtml(d.rule)}</span>` : `<span style="color:var(--nomatch)">✗ ${escHtml(d.rule)}</span>`;
+      const aiCol   = d.ai   === 'matched' || d.ai   === 'exact' || d.ai   === 'equivalent' ? `<span style="color:var(--excellent)">✓ ${escHtml(d.ai)}</span>`   : `<span style="color:var(--nomatch)">✗ ${escHtml(d.ai)}</span>`;
+      html += `<tr style="border-top:1px solid #ffffff10"><td style="padding:3px 6px;color:var(--text-muted)">${escHtml(d.tier)}</td><td style="padding:3px 6px">${escHtml(d.skill)}</td><td style="padding:3px 6px">${ruleCol}</td><td style="padding:3px 6px">${aiCol}</td><td style="padding:3px 6px;color:#93c5fd;font-size:11px">${d.ai_via ? escHtml(d.ai_via) : '—'}</td></tr>`;
+    }
+    html += `</table></div>`;
+  } else {
+    html += `<div style="font-size:12px;color:var(--excellent);margin-bottom:10px">✓ AI agrees with rule-based scoring — no differences found.</div>`;
+  }
+
+  if (a.overall_reasoning) {
+    html += `<div style="font-size:12px;line-height:1.6;color:var(--text-muted);border-top:1px solid #ffffff10;padding-top:10px">${escHtml(a.overall_reasoning)}</div>`;
+  }
+  return html;
+}
+
+function closeExplain(e) {
+  if (!e || e.target === document.getElementById('explain-overlay') || e.currentTarget.id === 'explain-close') {
+    document.getElementById('explain-overlay').classList.remove('open');
+  }
+}
+
+
+// ── Primary-match info popover ────────────────────────────────────────────────
+
+let _activePopover = null;  // {el, icon} currently open
+
+function _buildMatchPopoverHtml(c) {
+  const t   = (c.scoring_trace || {}).primary || {};
+  const res = t.result || c.primary_match || 'none';
+  const pathMap = {
+    'exact-direct':      'Direct word match (P3+)',
+    'exact-alias':       'Formal alias → canonical (P3+)',
+    'exact-auto-canonical': 'Auto-stripped qualifier → exact (P3+)',
+    'equivalent-json':   'Equivalency table (skill_equivalencies.json)',
+    'equivalent-embedding': 'AI embedding similarity',
+    'equivalent-capability':'Capability inference (GAP-040)',
+    'equivalent-ai-map':    'Upload-time AI semantic map',
+    'open-gate':         'No primary required (open gate)',
+    'none':              'No match found',
+  };
+  const pathLabel = pathMap[t.match_path] || t.match_path || '—';
+  const resTag = res === 'exact' ? 'exact' : res === 'equivalent' ? 'equiv' : 'none';
+  const resLabel = res === 'exact' ? '✓ Exact' : res === 'equivalent' ? '~ Equivalent' : '✗ No match';
+
+  const row = (label, val) =>
+    val ? `<div class="mp-row"><span class="mp-label">${escHtml(label)}</span><span class="mp-val">${escHtml(String(val))}</span></div>` : '';
+
+  // Embedding + LLM section
+  let embedHtml = '';
+  if (t.embedding_triggered_by) {
+    const llmOk = t.llm_revalidated === true;
+    const llmTag = t.llm_revalidated !== undefined && t.llm_revalidated !== null
+      ? `<span class="mp-tag ${llmOk ? 'llm-ok' : 'llm-rej'}">${llmOk ? '✓ LLM confirmed' : '✗ LLM rejected'}</span>`
+      : '';
+    embedHtml = `
+      <div class="mp-row">
+        <span class="mp-label">Triggered by</span>
+        <span class="mp-val"><span class="mp-tag ai">⚡ AI</span>${escHtml(t.embedding_triggered_by)}</span>
+      </div>
+      <div class="mp-row">
+        <span class="mp-label">Cosine score</span>
+        <span class="mp-val">${t.embedding_score ?? '—'} (threshold: ${t.embedding_threshold ?? 0.82})</span>
+      </div>
+      ${t.llm_revalidated !== undefined && t.llm_revalidated !== null ? `
+      <div class="mp-row">
+        <span class="mp-label">LLM check</span>
+        <span class="mp-val">${llmTag}</span>
+      </div>` : ''}
+      ${t.llm_reason ? `<div class="mp-row"><span class="mp-label">LLM reason</span><span class="mp-val">${escHtml(t.llm_reason)}</span></div>` : ''}`;
+  }
+
+  // Rejected embeddings (LLM said no)
+  let rejectHtml = '';
+  if (t.embedding_rejections && t.embedding_rejections.length) {
+    const items = t.embedding_rejections.map(r =>
+      `<div class="mp-reject-item"><span class="mp-tag llm-rej">✗</span>${escHtml(r.candidate_skill)} (score ${r.embedding_score}) — ${escHtml(r.llm_reason || '')}</div>`
+    ).join('');
+    rejectHtml = `
+      <div style="margin-top:8px">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">AI matches rejected by LLM:</div>
+        ${items}
+      </div>`;
+  }
+
+  // Alias detail
+  let aliasHtml = '';
+  if (t.match_detail && (t.match_path === 'exact-alias' || t.match_path === 'exact-auto-canonical')) {
+    aliasHtml = `<div class="mp-row"><span class="mp-label">Resolved as</span><span class="mp-val">${escHtml(t.match_detail)}</span></div>`;
+  } else if (t.match_detail && t.match_path === 'equivalent-json') {
+    aliasHtml = `<div class="mp-row"><span class="mp-label">Via</span><span class="mp-val">${escHtml(t.match_detail)}</span></div>`;
+  }
+
+  // Improvement note
+  let noteHtml = '';
+  if (t.match_path === 'equivalent-embedding' && t.llm_revalidated) {
+    noteHtml = `<div class="mp-note">💡 AI + LLM confirmed this match. Consider adding <strong>${escHtml(t.embedding_triggered_by || '')}</strong> to <code>skill_equivalencies.json</code> to make it deterministic and avoid future AI calls.</div>`;
+  } else if (t.match_path === 'equivalent-json') {
+    noteHtml = `<div class="mp-note">📋 Matched via <code>skill_equivalencies.json</code> — deterministic, no AI involved.</div>`;
+  } else if (res === 'exact') {
+    noteHtml = `<div class="mp-note">✓ Exact match — candidate has the skill directly in their profile at P3+.</div>`;
+  } else if (res === 'none') {
+    noteHtml = `<div class="mp-note">✗ No path found — candidate missing primary skill and no equivalency or AI match applies.</div>`;
+  }
+
+  return `
+    <h4>How Primary Skill Was Determined</h4>
+    <div class="mp-row">
+      <span class="mp-label">Demand skill</span>
+      <span class="mp-val">${escHtml(t.skill || c.scoring_trace?.primary?.skill || '—')}</span>
+    </div>
+    <div class="mp-row">
+      <span class="mp-label">Result</span>
+      <span class="mp-val"><span class="mp-tag ${resTag}">${resLabel}</span></span>
+    </div>
+    <div class="mp-row">
+      <span class="mp-label">Path</span>
+      <span class="mp-val">${escHtml(pathLabel)}</span>
+    </div>
+    ${aliasHtml}
+    ${row('Proficiency', t.proficiency_label)}
+    ${embedHtml}
+    ${rejectHtml}
+    ${noteHtml}`;
+}
+
+function toggleMatchPopover(event, iconEl) {
+  event.stopPropagation();
+  const c = JSON.parse(iconEl.getAttribute('data-candidate'));
+
+  // Close if same icon clicked again
+  if (_activePopover && _activePopover.icon === iconEl) {
+    _closeMatchPopover();
+    return;
+  }
+  _closeMatchPopover();
+
+  let pop = document.getElementById('match-popover');
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.id = 'match-popover';
+    pop.className = 'match-popover';
+    pop.addEventListener('click', e => e.stopPropagation());
+    document.body.appendChild(pop);
+  }
+
+  pop.innerHTML = _buildMatchPopoverHtml(c);
+
+  // Position near icon
+  const rect = iconEl.getBoundingClientRect();
+  const vpW = window.innerWidth;
+  const popW = Math.min(340, vpW * 0.92);
+  let left = rect.right + 8;
+  if (left + popW > vpW - 8) left = rect.left - popW - 8;
+  if (left < 8) left = 8;
+  const top = Math.min(rect.top, window.innerHeight - 420);
+
+  pop.style.left = left + 'px';
+  pop.style.top  = Math.max(top, 8) + 'px';
+  pop.classList.add('visible');
+  _activePopover = { el: pop, icon: iconEl };
+}
+
+function _closeMatchPopover() {
+  if (_activePopover) {
+    _activePopover.el.classList.remove('visible');
+    _activePopover = null;
+  }
+}
+
+// Close popover when clicking anywhere else
+document.addEventListener('click', () => _closeMatchPopover());
+document.addEventListener('keydown', e => { if (e.key === 'Escape') _closeMatchPopover(); });
+
+
+// ── Interactive Skill Match Tuning ────────────────────────────────────────────
+let _interactState = null;  // holds current interaction context
+
+async function showInteract(btn) {
+  const d = JSON.parse(btn.getAttribute('data-demand'));
+  const c = JSON.parse(btn.getAttribute('data-candidate'));
+
+  const content = document.getElementById('interact-content');
+  content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div class="spinner"></div>Loading skill data…</div>';
+  document.getElementById('interact-overlay').classList.add('open');
+
+  try {
+    const resp = await fetch('/api/report/what-if-match', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        role_id: d.role_id,
+        employee_id: c.employee_id || null,
+        candidate_name: c.name || null,
+        candidate_role: c.role || null,
+      }),
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      content.innerHTML = '<p style="color:var(--nomatch)">Error: ' + escHtml(err) + '</p>';
+      return;
+    }
+    const data = await resp.json();
+    _interactState = {
+      demand: data.demand,
+      employeeId: data.employee_id,
+      candidateName: data.candidate_name,
+      candidateRole: data.candidate_role,
+      roleId: data.role_id,
+      originalResult: data.original_result,
+      updatedResult: data.updated_result,
+      skillProfile: data.skill_profile.map(s => ({ ...s })),
+      inferredAdditional: data.inferred_additional_skills.map(s => ({ ...s })),
+      sessionId: 'interact-' + Date.now(),
+      rating: 0,
+    };
+    _renderInteractModal();
+  } catch (err) {
+    content.innerHTML = '<p style="color:var(--nomatch)">Network error: ' + escHtml(err.message) + '</p>';
+  }
+}
+
+function _renderInteractModal() {
+  const s = _interactState;
+  const dm = s.demand;
+  const content = document.getElementById('interact-content');
+  const kv = (k, v) => `<div class="explain-kv"><span class="k">${k}: </span><span class="v">${escHtml(v || '—')}</span></div>`;
+
+  const profOptions = (selected) => [1,2,3,4,5].map(p =>
+    `<option value="${p}" ${p === selected ? 'selected' : ''}>P${p} - ${['Beginner','Intermediate','Advanced','Expert','Master'][p-1]}</option>`
+  ).join('');
+
+  // Demand skills section
+  const demandSkills = `
+    <div class="interact-section">
+      <h3>Demand Skills</h3>
+      <div class="explain-grid">
+        ${kv('Role', dm.role || dm.role_id)}
+        ${kv('Primary Skill', dm.primary_skill)}
+        ${kv('Career Level', dm.career_level)}
+        ${kv('Capability', dm.capability)}
+      </div>
+      ${(dm.secondary_skills || []).length ? '<div style="margin-top:8px"><span style="font-size:11px;color:var(--text-muted)">Secondary:</span> <div class="explain-skills">' + dm.secondary_skills.map(sk => '<span class="explain-pill matched">' + escHtml(sk) + '</span>').join('') + '</div></div>' : ''}
+      ${(dm.other_skills || []).length ? '<div style="margin-top:4px"><span style="font-size:11px;color:var(--text-muted)">Other:</span> <div class="explain-skills">' + dm.other_skills.map(sk => '<span class="explain-pill matched" style="color:var(--accent2);border-color:var(--accent2)55">' + escHtml(sk) + '</span>').join('') + '</div></div>' : ''}
+    </div>`;
+
+  // Candidate editable skills
+  const skillRows = s.skillProfile.map((sk, i) => `
+    <div class="skill-edit-row" data-idx="${i}">
+      <span class="skill-name">${escHtml(sk.skill)}</span>
+      <span class="skill-source">${escHtml(sk.source)}</span>
+      <select onchange="_updateSkillProf(${i}, this.value)">${profOptions(sk.proficiency)}</select>
+      <button class="remove-skill" onclick="_removeSkill(${i})" title="Remove">&times;</button>
+    </div>
+  `).join('');
+
+  // Inferred additional skills (toggleable)
+  const inferredRows = s.inferredAdditional.length ? `
+    <div class="interact-section">
+      <h3>Additional Skills (Inferred from CSV)</h3>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Click + to add a skill to the candidate profile for this what-if scenario.</div>
+      <div id="inferred-skills-list">
+        ${s.inferredAdditional.map((sk, i) => `
+          <div class="skill-edit-row" data-inf-idx="${i}">
+            <span class="skill-name">${escHtml(sk.skill)}</span>
+            <span class="skill-source" style="color:var(--regular)">inferred</span>
+            <select id="inf-prof-${i}">${profOptions(sk.proficiency)}</select>
+            <button class="btn btn-secondary" style="font-size:11px;padding:2px 8px" onclick="_addInferredSkill(${i})">+</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  // Add manual skill row
+  const addSkillRow = `
+    <div class="add-skill-row">
+      <input id="new-skill-name" type="text" placeholder="Add a new skill..." />
+      <select id="new-skill-prof">${profOptions(3)}</select>
+      <button class="btn btn-primary" style="font-size:12px;padding:4px 12px" onclick="_addManualSkill()">+ Add</button>
+    </div>`;
+
+  // Result comparison
+  const orig = s.originalResult;
+  const upd = s.updatedResult;
+  const origColor = _fitColor(orig.fit);
+  const updColor = _fitColor(upd.fit);
+  const scoreDelta = (upd.score_pct - orig.score_pct).toFixed(1);
+  const deltaClass = scoreDelta > 0 ? 'positive' : scoreDelta < 0 ? 'negative' : 'neutral';
+  const deltaSign = scoreDelta > 0 ? '+' : '';
+
+  const resultSection = `
+    <div class="interact-result" id="interact-result-section">
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted)">Original</div>
+          <span style="color:${origColor};font-weight:700;font-size:16px">${orig.fit} ${(orig.score_pct||0).toFixed(1)}%</span>
+        </div>
+        <div style="font-size:20px;color:var(--text-muted);align-self:center">→</div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted)">Updated</div>
+          <span style="color:${updColor};font-weight:700;font-size:16px">${upd.fit} ${(upd.score_pct||0).toFixed(1)}%</span>
+        </div>
+        <div class="delta ${deltaClass}" style="align-self:center;font-size:14px;font-weight:700">${deltaSign}${scoreDelta}%</div>
+      </div>
+      ${upd.matched_skills ? '<div style="margin-top:8px"><span style="font-size:11px;color:var(--text-muted)">Matched:</span> <div class="explain-skills">' + (upd.matched_skills||[]).map(sk => '<span class="explain-pill matched">✓ ' + escHtml(sk) + '</span>').join('') + '</div></div>' : ''}
+      ${upd.missing_skills ? '<div style="margin-top:4px"><span style="font-size:11px;color:var(--text-muted)">Missing:</span> <div class="explain-skills">' + (upd.missing_skills||[]).map(sk => '<span class="explain-pill missing">✗ ' + escHtml(sk) + '</span>').join('') + '</div></div>' : ''}
+      ${upd.rationale ? '<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">' + escHtml(upd.rationale) + '</div>' : ''}
+    </div>`;
+
+  // Rating + submit actions
+  const stars = [1,2,3,4,5].map(n =>
+    `<span class="star ${n <= s.rating ? 'active' : ''}" onclick="_setRating(${n})">★</span>`
+  ).join('');
+
+  const actionsSection = `
+    <div class="interact-actions">
+      <button class="btn btn-primary" onclick="_recomputeMatch()">🔄 Recompute Match</button>
+      <div class="rating-group"><label>Rating:</label>${stars}</div>
+      <textarea id="interact-comment" placeholder="Optional comment…" rows="1"></textarea>
+      <button class="btn btn-primary" style="background:var(--excellent)" onclick="_submitInteraction()">✓ Submit</button>
+    </div>`;
+
+  content.innerHTML = `
+    <h2>Interactive Match Tuning</h2>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">${escHtml(s.candidateName)} · ${escHtml(s.candidateRole)}</div>
+    ${demandSkills}
+    <div class="interact-section">
+      <h3>Candidate Skills (Editable)</h3>
+      <div id="skill-edit-list">${skillRows}</div>
+      ${addSkillRow}
+    </div>
+    ${inferredRows}
+    ${resultSection}
+    ${actionsSection}
+  `;
+}
+
+function _fitColor(fit) {
+  if (fit === 'Excellent') return 'var(--excellent)';
+  if (fit === 'Good') return 'var(--good)';
+  if (fit === 'Regular') return 'var(--regular)';
+  return 'var(--nomatch)';
+}
+
+function _updateSkillProf(idx, val) {
+  _interactState.skillProfile[idx].proficiency = parseInt(val, 10);
+}
+
+function _removeSkill(idx) {
+  _interactState.skillProfile.splice(idx, 1);
+  _renderInteractModal();
+}
+
+function _addManualSkill() {
+  const nameEl = document.getElementById('new-skill-name');
+  const profEl = document.getElementById('new-skill-prof');
+  const name = (nameEl.value || '').trim();
+  if (!name) return;
+  // Prevent duplicates
+  if (_interactState.skillProfile.some(s => s.skill.toLowerCase() === name.toLowerCase())) {
+    nameEl.style.borderColor = 'var(--nomatch)';
+    setTimeout(() => nameEl.style.borderColor = '', 1500);
+    return;
+  }
+  _interactState.skillProfile.push({ skill: name, proficiency: parseInt(profEl.value, 10), source: 'manual' });
+  nameEl.value = '';
+  _renderInteractModal();
+}
+
+function _addInferredSkill(infIdx) {
+  const sk = _interactState.inferredAdditional[infIdx];
+  const profEl = document.getElementById('inf-prof-' + infIdx);
+  const prof = profEl ? parseInt(profEl.value, 10) : sk.proficiency;
+  // Prevent duplicates
+  if (_interactState.skillProfile.some(s => s.skill.toLowerCase() === sk.skill.toLowerCase())) return;
+  _interactState.skillProfile.push({ skill: sk.skill, proficiency: prof, source: 'inferred' });
+  _interactState.inferredAdditional.splice(infIdx, 1);
+  _renderInteractModal();
+}
+
+function _setRating(n) {
+  _interactState.rating = n;
+  document.querySelectorAll('.interact-actions .star').forEach((el, i) => {
+    el.classList.toggle('active', i < n);
+  });
+}
+
+async function _recomputeMatch() {
+  const s = _interactState;
+  const recompBtn = document.querySelector('.interact-actions .btn-primary');
+  if (recompBtn) { recompBtn.disabled = true; recompBtn.textContent = '⏳ Recomputing…'; }
+
+  try {
+    const resp = await fetch('/api/report/what-if-match', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        role_id: s.roleId,
+        employee_id: s.employeeId || null,
+        candidate_name: s.candidateName || null,
+        candidate_role: s.candidateRole || null,
+        edited_skill_profile: s.skillProfile.map(sk => ({
+          skill: sk.skill,
+          proficiency: sk.proficiency,
+          source: sk.source,
+        })),
+      }),
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      alert('Recompute failed: ' + err);
+      return;
+    }
+    const data = await resp.json();
+    s.updatedResult = data.updated_result;
+    _renderInteractModal();
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  }
+}
+
+async function _submitInteraction() {
+  const s = _interactState;
+  if (s.rating < 1) {
+    alert('Please select a rating (1-5 stars) before submitting.');
+    return;
+  }
+
+  const comment = (document.getElementById('interact-comment') || {}).value || '';
+  const payload = {
+    session_id: s.sessionId,
+    role_id: s.roleId,
+    employee_id: s.employeeId || '',
+    candidate_name: s.candidateName,
+    candidate_role: s.candidateRole,
+    rating: s.rating,
+    comment: comment || null,
+    demand: s.demand,
+    original_result: s.originalResult,
+    updated_result: s.updatedResult,
+    edited_skill_profile: s.skillProfile,
+    inferred_additional_skills: s.inferredAdditional,
+  };
+
+  try {
+    const resp = await fetch('/api/report/interaction-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      alert('Submit failed: ' + err);
+      return;
+    }
+    const data = await resp.json();
+    // Show success toast
+    const toast = document.createElement('div');
+    toast.className = 'interact-toast';
+    toast.textContent = '✓ Interaction saved (ID: ' + data.feedback_id + ')';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+    closeInteract();
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  }
+}
+
+function closeInteract(e) {
+  if (!e || e.target === document.getElementById('interact-overlay') || e.currentTarget.id === 'interact-close') {
+    document.getElementById('interact-overlay').classList.remove('open');
+    _interactState = null;
+  }
+}
+
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Auto-load on open when served from FastAPI (not when opened as a local file)
+  if (window.location.protocol !== 'file:') loadData();
+  // Close modals on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeExplain({ target: document.getElementById('explain-overlay') });
+      closeInteract({ target: document.getElementById('interact-overlay') });
+    }
+  });
+});
+</script>
+</body>
+</html>
+

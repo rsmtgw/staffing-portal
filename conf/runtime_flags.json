@@ -1,0 +1,5 @@
+{
+  "_comment": "Runtime feature flags \u2014 editable via Admin UI. Cosmos is primary storage.",
+  "skill_equiv_llm_revalidate": true,
+  "skill_embed_enabled": true
+}

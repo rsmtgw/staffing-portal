@@ -1,0 +1,336 @@
+[
+  {
+    "id": "CL-13",
+    "level": "CL-13",
+    "title": "Entry-Level / Apprentice / Intern",
+    "experience_years_min": 0,
+    "experience_years_max": 1,
+    "typical_roles": ["Intern", "Apprentice", "Graduate Trainee", "Junior Tester"],
+    "expected_skills": [
+      "Basic coding knowledge",
+      "Debugging fundamentals",
+      "Documentation",
+      "Testing under supervision",
+      "Team collaboration"
+    ],
+    "responsibilities": [
+      "Learns foundational principles of software development and coding practices.",
+      "Assists in basic tasks like testing, documentation, and debugging under supervision.",
+      "Supports the development process by completing assigned tasks and shadowing team members."
+    ],
+    "description": "Entry-level role. Learns software development fundamentals under close supervision, assists with testing, documentation, and debugging."
+  },
+  {
+    "id": "CL-12",
+    "level": "CL-12",
+    "title": "Junior Analyst",
+    "experience_years_min": 1,
+    "experience_years_max": 3,
+    "typical_roles": ["Junior Developer", "Junior Analyst", "Associate Software Engineer", "Junior QA"],
+    "expected_skills": [
+      "Coding in at least one language",
+      "Unit testing",
+      "Bug fixing",
+      "Following coding standards",
+      "Working under guidance"
+    ],
+    "responsibilities": [
+      "Executes specific coding tasks with growing independence.",
+      "Produces deliverables under strict guidance and reviews by senior developers.",
+      "Supports testing, debugging, and minor enhancements of existing software."
+    ],
+    "description": "Junior contributor executing specific coding tasks under strict guidance. Focuses on testing, debugging, and minor enhancements."
+  },
+  {
+    "id": "CL-11",
+    "level": "CL-11",
+    "title": "Analyst",
+    "experience_years_min": 3,
+    "experience_years_max": 6,
+    "typical_roles": ["Software Developer", "Analyst", "QA Analyst", "Business Analyst", "Application Developer"],
+    "expected_skills": [
+      "Component-level coding",
+      "Requirements analysis",
+      "Collaborative problem-solving",
+      "Software testing and troubleshooting",
+      "Knowledge of software standards and tools"
+    ],
+    "responsibilities": [
+      "Codes components and modules with clear requirements and structure.",
+      "Collaborates with developers and functional leads for problem-solving.",
+      "Contributes to testing, troubleshooting, and optimization of applications.",
+      "Focus is on building expertise in software standards and tools."
+    ],
+    "description": "Codes components and modules independently. Collaborates with leads, contributes to testing and optimization, builds domain expertise."
+  },
+  {
+    "id": "CL-10",
+    "level": "CL-10",
+    "title": "Senior Analyst",
+    "experience_years_min": 6,
+    "experience_years_max": 9,
+    "typical_roles": [
+      "Senior Developer",
+      "Senior Analyst",
+      "Senior Software Engineer",
+      "Technical Analyst",
+      "Module Lead"
+    ],
+    "expected_skills": [
+      "Independent module ownership",
+      "Technical design",
+      "Code review",
+      "Domain expertise",
+      "Mentoring junior team members",
+      "Quality assurance coordination"
+    ],
+    "responsibilities": [
+      "Manages small tasks/modules independently and coordinates with quality assurance.",
+      "Applies domain expertise to solve complex coding challenges.",
+      "Performs technical design and reviews for assigned modules.",
+      "Begins to mentor junior team members and contribute actively to the team's success."
+    ],
+    "description": "Manages modules independently, performs technical design and reviews. Begins mentoring junior staff and applying domain expertise to complex problems."
+  },
+  {
+    "id": "CL-9",
+    "level": "CL-9",
+    "title": "Consultant / Team Lead",
+    "experience_years_min": 9,
+    "experience_years_max": 13,
+    "typical_roles": [
+      "Tech Lead",
+      "Consultant",
+      "Senior Consultant",
+      "Team Lead",
+      "Lead Developer",
+      "Solution Consultant"
+    ],
+    "expected_skills": [
+      "Workstream leadership",
+      "Coding standards enforcement",
+      "Stakeholder collaboration",
+      "Escalation handling",
+      "Coaching and mentoring",
+      "Architecture contribution"
+    ],
+    "responsibilities": [
+      "Leads the development of multiple components or a workstream.",
+      "Ensures coding standards, testing protocols, and design optimizations are followed.",
+      "Drives stakeholder collaboration and addresses escalations within the scope.",
+      "Coaches junior team members in technical and delivery aspects."
+    ],
+    "description": "Leads workstreams and multiple components. Drives coding standards, stakeholder collaboration, and escalation resolution. Coaches junior team members."
+  },
+  {
+    "id": "CL-8",
+    "level": "CL-8",
+    "title": "Associate Manager",
+    "experience_years_min": 12,
+    "experience_years_max": 16,
+    "typical_roles": [
+      "Associate Manager",
+      "Solution Architect",
+      "Engineering Manager",
+      "Delivery Lead",
+      "Technical Project Manager"
+    ],
+    "expected_skills": [
+      "Project delivery ownership",
+      "Resource management",
+      "Risk management",
+      "Architecture and design guidance",
+      "Client interaction",
+      "Technical strategy"
+    ],
+    "responsibilities": [
+      "Owns the delivery and technical strategy of software development projects.",
+      "Manages resources, schedules, risks, and mitigations for successful delivery.",
+      "Provides guidance on architecture and design choices for projects.",
+      "Handles client interactions to align technical execution with business needs."
+    ],
+    "description": "Owns project delivery and technical strategy. Manages resources, risks, and client interactions to align execution with business needs."
+  },
+  {
+    "id": "CL-7",
+    "level": "CL-7",
+    "title": "Manager",
+    "experience_years_min": 14,
+    "experience_years_max": 18,
+    "typical_roles": [
+      "Manager",
+      "Delivery Manager",
+      "Engineering Manager",
+      "Principal Engineer",
+      "Program Manager"
+    ],
+    "expected_skills": [
+      "Technical direction setting",
+      "Cross-team collaboration",
+      "Deployment process optimization",
+      "Stakeholder satisfaction",
+      "Team mentoring",
+      "Organizational goal alignment"
+    ],
+    "responsibilities": [
+      "Sets technical direction and ensures delivery quality for software projects.",
+      "Develops strategies to optimize development and deployment processes.",
+      "Manages cross-team collaboration and ensures stakeholders' satisfaction.",
+      "Mentors teams and drives organizational goals at the project level."
+    ],
+    "description": "Sets technical direction and delivery quality strategy. Optimizes development processes, manages cross-team collaboration, mentors project teams."
+  },
+  {
+    "id": "CL-6",
+    "level": "CL-6",
+    "title": "Senior Manager",
+    "experience_years_min": 16,
+    "experience_years_max": 22,
+    "typical_roles": [
+      "Senior Manager",
+      "Senior Delivery Manager",
+      "Enterprise Architect",
+      "Principal Architect",
+      "Program Director"
+    ],
+    "expected_skills": [
+      "Large-scale program oversight",
+      "Value realization",
+      "Performance metrics management",
+      "Multi-location coordination",
+      "Continuous improvement",
+      "Operating model design"
+    ],
+    "responsibilities": [
+      "Oversees large-scale software development initiatives across complex programs.",
+      "Focuses on value realization and performance metrics for client engagements.",
+      "Ensures smooth coordination across multiple locations and functions.",
+      "Drives continuous improvement in the software lifecycle and operating model."
+    ],
+    "description": "Oversees complex, large-scale programs. Drives value realization, performance metrics, multi-location coordination, and continuous improvement."
+  },
+  {
+    "id": "CL-5",
+    "level": "CL-5",
+    "title": "Director",
+    "experience_years_min": 20,
+    "experience_years_max": 26,
+    "typical_roles": [
+      "Director",
+      "Technology Director",
+      "Portfolio Director",
+      "Solution Director",
+      "VP of Engineering"
+    ],
+    "expected_skills": [
+      "Strategic direction setting",
+      "Enterprise risk management",
+      "Organizational leadership development",
+      "Client innovation shaping",
+      "High-impact project leadership"
+    ],
+    "responsibilities": [
+      "Shapes the strategic direction of software offerings and client innovations.",
+      "Owns enterprise-level risk management for software engagements.",
+      "Builds organizational leadership capabilities to manage large-scale delivery.",
+      "Sets the direction for high-impact, technically challenging projects."
+    ],
+    "description": "Shapes strategic direction of software offerings. Owns enterprise risk, builds leadership capabilities, drives high-impact technically challenging projects."
+  },
+  {
+    "id": "CL-4",
+    "level": "CL-4",
+    "title": "Senior Director",
+    "experience_years_min": 22,
+    "experience_years_max": 30,
+    "typical_roles": [
+      "Senior Director",
+      "Client Account Lead",
+      "Chief Architect",
+      "VP Technology"
+    ],
+    "expected_skills": [
+      "Cross-functional collaboration",
+      "Innovation delivery quality",
+      "Next-gen solution strategy",
+      "Optimized architecture design"
+    ],
+    "responsibilities": [
+      "Guides cross-functional collaborations, ensuring innovation delivery quality.",
+      "Forms strategies defining next-gen solutions with optimized architecture."
+    ],
+    "description": "Guides cross-functional innovation and defines next-gen solution strategies with optimized architecture at enterprise scale."
+  },
+  {
+    "id": "CL-3",
+    "level": "CL-3",
+    "title": "Managing Director (MD)",
+    "experience_years_min": 25,
+    "experience_years_max": 35,
+    "typical_roles": [
+      "Managing Director",
+      "MD",
+      "Account Managing Director",
+      "Technology MD"
+    ],
+    "expected_skills": [
+      "Enterprise-scale transformation",
+      "Business growth strategy",
+      "Technical strategy advancement",
+      "Organizational leadership"
+    ],
+    "responsibilities": [
+      "Leads transformation at an enterprise scale focused on software technology goals.",
+      "Ensures business growth by advancing technical strategies."
+    ],
+    "description": "Leads enterprise-scale transformation. Drives business growth through advanced technical strategies and organizational leadership."
+  },
+  {
+    "id": "CL-2",
+    "level": "CL-2",
+    "title": "Senior Managing Director (Senior MD)",
+    "experience_years_min": 28,
+    "experience_years_max": 40,
+    "typical_roles": [
+      "Senior MD",
+      "Senior Managing Director",
+      "Chief Technology Officer",
+      "Global Technology Lead"
+    ],
+    "expected_skills": [
+      "Futuristic product strategy",
+      "Industry trend alignment",
+      "Thought leadership",
+      "Enterprise profitability direction"
+    ],
+    "responsibilities": [
+      "Innovates strategies into futuristic software products aligned with industry trends.",
+      "Directs thought leadership impacting enterprise profitability."
+    ],
+    "description": "Innovates strategies into futuristic products. Directs thought leadership aligned with industry trends that impacts enterprise profitability."
+  },
+  {
+    "id": "CL-1",
+    "level": "CL-1",
+    "title": "Global Executive MD / Enterprise Owner",
+    "experience_years_min": 30,
+    "experience_years_max": 99,
+    "typical_roles": [
+      "Global Executive MD",
+      "Enterprise Owner",
+      "Chief Executive",
+      "Global Software Lead"
+    ],
+    "expected_skills": [
+      "Enterprise-wide framework design",
+      "Innovation ecosystem governance",
+      "Organizational governance",
+      "Global deployment strategy"
+    ],
+    "responsibilities": [
+      "Shapes software deployment frameworks impacting the entire organization.",
+      "Advises innovation ecosystems supporting governance."
+    ],
+    "description": "Shapes organization-wide software deployment frameworks. Advises innovation ecosystems and governance at the highest executive level."
+  }
+]

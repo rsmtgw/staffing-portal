@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "staffing-agent"
+version = "0.1.0"
+description = "Multi-agent staffing platform (Google ADK + FastAPI, deployable to Azure)"
+requires-python = ">=3.10"
+dependencies = [
+    "google-adk",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.0",
+    "python-dotenv",
+    "azure-cosmos>=4.5",
+    "azure-storage-blob>=12.0",
+    "aioimaplib>=1.1",
+    "pdfplumber>=0.11",
+    "python-docx>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "core*", "observability*", "conf*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
