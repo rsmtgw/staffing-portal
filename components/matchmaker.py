@@ -33,6 +33,16 @@ for _candidate in [
 if _AI_SM_ROOT and _AI_SM_ROOT not in sys.path:
     sys.path.insert(0, _AI_SM_ROOT)
 
+# core/__init__.py unconditionally imports SkillKnowledgeBase which requires
+# lancedb — not installed in this environment. Inject a minimal stub for the
+# 'core' package so Python skips __init__.py and loads core.matcher directly.
+if _AI_SM_ROOT and "core" not in sys.modules:
+    import types as _types
+    _core_stub = _types.ModuleType("core")
+    _core_stub.__path__ = [os.path.join(_AI_SM_ROOT, "core")]  # type: ignore[attr-defined]
+    _core_stub.__package__ = "core"
+    sys.modules["core"] = _core_stub
+
 FitLabel = Literal["Excellent", "Good", "Regular", "No Match"]
 
 
@@ -78,7 +88,7 @@ class MatchmakerEngine:
         candidates: list[dict],
         top_n: int | None = None,
     ) -> list[MatchResult]:
-        from ai_staffing_matchmaker import match_candidate_to_role
+        from core.matcher import match_candidate_to_role
         from components.ai_sm_bridge import (
             build_ai_sm_candidate,
             build_ai_sm_demand,
