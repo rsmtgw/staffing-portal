@@ -3,8 +3,7 @@ name: Trigger auto deployment for staffing-portal
 on:
   push:
     branches:
-      - main
-      - master
+      - staffing-portal
     paths:
       - '**'
       - '.github/workflows/staffing-portal-AutoDeploy.yml'
