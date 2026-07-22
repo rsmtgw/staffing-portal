@@ -14,15 +14,13 @@ WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         libffi-dev \
-        git \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt pyproject.toml ./
 
-# Clone the matching engine (sibling repo — no pip package available)
-RUN git clone --branch match-maker_002 --depth 1 \
-    https://github.com/jaynro/AI-Staffing-Matchmaker.git \
-    /ai-staffing-matchmaker
+# Matching engine source — copied from the build context by the workflow
+# (checked out by actions/checkout before docker build, avoids auth issues)
+COPY ai-staffing-matchmaker/ /ai-staffing-matchmaker/
 
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir --prefix=/install -r requirements.txt
