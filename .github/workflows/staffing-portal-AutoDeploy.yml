@@ -36,6 +36,25 @@ jobs:
           tenant-id: ${{ secrets.STAFFINGAGENT_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.STAFFINGAGENT_AZURE_SUBSCRIPTION_ID }}
 
+      - name: Create staffing-portal Container App if it does not exist
+        run: |
+          if az containerapp show -n staffing-portal -g staffing-group &>/dev/null; then
+            echo "staffing-portal already exists — skipping creation."
+          else
+            echo "Creating staffing-portal container app..."
+            ENV=$(az containerapp env list -g staffing-group --query "[0].name" -o tsv)
+            az containerapp create \
+              --name staffing-portal \
+              --resource-group staffing-group \
+              --environment "$ENV" \
+              --image mcr.microsoft.com/azuredocs/containerapps-helloworld:latest \
+              --target-port 8000 \
+              --ingress external \
+              --cpu 0.5 --memory 1.0Gi \
+              --min-replicas 0 --max-replicas 3
+            echo "Container app created."
+          fi
+
       - name: Build and push container image to registry
         uses: azure/container-apps-deploy-action@v2
         with:
@@ -43,15 +62,15 @@ jobs:
           registryUrl: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}
           registryUsername: ${{ secrets.STAFFINGAGENT_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.STAFFINGAGENT_REGISTRY_PASSWORD }}
-          containerAppName: staffing-agent
+          containerAppName: staffing-portal
           resourceGroup: staffing-group
           imageToBuild: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}/staffing-portal:${{ github.sha }}
 
       - name: Wait for Container App provisioning to complete
         run: |
-          echo "Waiting for staffing-agent to finish provisioning..."
+          echo "Waiting for staffing-portal to finish provisioning..."
           for i in $(seq 1 30); do
-            STATE=$(az containerapp show -n staffing-agent -g staffing-group \
+            STATE=$(az containerapp show -n staffing-portal -g staffing-group \
               --query "properties.provisioningState" -o tsv 2>/dev/null || echo "Unknown")
             echo "Attempt $i/30 — provisioningState: $STATE"
             if [ "$STATE" = "Succeeded" ] || [ "$STATE" = "Failed" ]; then
@@ -64,10 +83,10 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy to staffing-agent Container App
+      - name: Deploy to staffing-portal Container App
         uses: azure/container-apps-deploy-action@v2
         with:
-          containerAppName: staffing-agent
+          containerAppName: staffing-portal
           resourceGroup: staffing-group
           imageToDeploy: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}/staffing-portal:${{ github.sha }}
 
@@ -75,7 +94,7 @@ jobs:
         run: |
           for attempt in 1 2 3; do
             az containerapp ingress update \
-              --name staffing-agent \
+              --name staffing-portal \
               --resource-group staffing-group \
               --target-port 8000 && break
             echo "Attempt $attempt failed, retrying in 15s..."
