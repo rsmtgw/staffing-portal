@@ -25,7 +25,7 @@ jobs:
       - name: Checkout AI-Staffing-Matchmaker (matching engine)
         uses: actions/checkout@v2
         with:
-          repository: jaynro/AI-Staffing-Matchmaker
+          repository: rsmtgw/AI-Staffing-Matchmaker
           ref: match-maker_002
           path: ai-staffing-matchmaker
 
