@@ -25,30 +25,30 @@ jobs:
 
       - name: Debug — check secrets are present
         run: |
-          echo "CLIENT_ID set: ${{ secrets.STAFFINGPORTAL_AZURE_CLIENT_ID != '' }}"
-          echo "TENANT_ID set: ${{ secrets.STAFFINGPORTAL_AZURE_TENANT_ID != '' }}"
-          echo "SUBSCRIPTION_ID set: ${{ secrets.STAFFINGPORTAL_AZURE_SUBSCRIPTION_ID != '' }}"
-          echo "REGISTRY_URL set: ${{ secrets.STAFFINGPORTAL_REGISTRY_URL != '' }}"
-          echo "REGISTRY_USERNAME set: ${{ secrets.STAFFINGPORTAL_REGISTRY_USERNAME != '' }}"
-          echo "REGISTRY_PASSWORD set: ${{ secrets.STAFFINGPORTAL_REGISTRY_PASSWORD != '' }}"
+          echo "CLIENT_ID set: ${{ secrets.STAFFINGAGENT_AZURE_CLIENT_ID != '' }}"
+          echo "TENANT_ID set: ${{ secrets.STAFFINGAGENT_AZURE_TENANT_ID != '' }}"
+          echo "SUBSCRIPTION_ID set: ${{ secrets.STAFFINGAGENT_AZURE_SUBSCRIPTION_ID != '' }}"
+          echo "REGISTRY_URL set: ${{ secrets.STAFFINGAGENT_REGISTRY_URL != '' }}"
+          echo "REGISTRY_USERNAME set: ${{ secrets.STAFFINGAGENT_REGISTRY_USERNAME != '' }}"
+          echo "REGISTRY_PASSWORD set: ${{ secrets.STAFFINGAGENT_REGISTRY_PASSWORD != '' }}"
 
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.STAFFINGPORTAL_AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.STAFFINGPORTAL_AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.STAFFINGPORTAL_AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.STAFFINGAGENT_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.STAFFINGAGENT_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.STAFFINGAGENT_AZURE_SUBSCRIPTION_ID }}
 
       - name: Build and push container image to registry
         uses: azure/container-apps-deploy-action@v2
         with:
           appSourcePath: ${{ github.workspace }}
-          registryUrl: ${{ secrets.STAFFINGPORTAL_REGISTRY_URL }}
-          registryUsername: ${{ secrets.STAFFINGPORTAL_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.STAFFINGPORTAL_REGISTRY_PASSWORD }}
+          registryUrl: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}
+          registryUsername: ${{ secrets.STAFFINGAGENT_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.STAFFINGAGENT_REGISTRY_PASSWORD }}
           containerAppName: staffing-portal
           resourceGroup: staffing-group
-          imageToBuild: ${{ secrets.STAFFINGPORTAL_REGISTRY_URL }}/staffing-portal:${{ github.sha }}
+          imageToBuild: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}/staffing-portal:${{ github.sha }}
 
       - name: Wait for Container App provisioning to complete
         run: |
@@ -72,7 +72,7 @@ jobs:
         with:
           containerAppName: staffing-portal
           resourceGroup: staffing-group
-          imageToDeploy: ${{ secrets.STAFFINGPORTAL_REGISTRY_URL }}/staffing-portal:${{ github.sha }}
+          imageToDeploy: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}/staffing-portal:${{ github.sha }}
 
       - name: Ensure ingress target port is 8000
         run: |
