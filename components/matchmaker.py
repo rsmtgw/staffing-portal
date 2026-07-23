@@ -94,6 +94,11 @@ class MatchmakerEngine:
             build_ai_sm_demand,
             ai_sm_result_to_match_result,
         )
+        try:
+            from app.services.eval_cache import get_eval_cache
+            kb = get_eval_cache()
+        except Exception:
+            kb = None
 
         primary_skill    = demand_skill_analysis.get("primary_skill") or ""
         secondary_skills = demand_skill_analysis.get("secondary_skills") or []
@@ -127,7 +132,7 @@ class MatchmakerEngine:
         results: list[MatchResult] = []
         for cand in candidates:
             ai_candidate = build_ai_sm_candidate(cand)
-            raw = match_candidate_to_role(ai_candidate, ai_demand)
+            raw = match_candidate_to_role(ai_candidate, ai_demand, kb=kb)
             results.append(ai_sm_result_to_match_result(raw, cand))
 
         results.sort(
