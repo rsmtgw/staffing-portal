@@ -1,12 +1,13 @@
-name: Trigger auto deployment for staffing-agent
+name: Trigger auto deployment for staffing-portal
 
 on:
   push:
     branches:
-      - staffing-agent
+      - master
+      - main
     paths:
       - '**'
-      - '.github/workflows/staffing-agent-AutoDeploy.yml'
+      - '.github/workflows/staffing-portal-AutoDeploy.yml'
 
   workflow_dispatch:
 
@@ -45,7 +46,7 @@ jobs:
           registryPassword: ${{ secrets.STAFFINGAGENT_REGISTRY_PASSWORD }}
           containerAppName: staffing-agent
           resourceGroup: staffing-group
-          imageToBuild: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}/staffing-agent:${{ github.sha }}
+          imageToBuild: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}/staffing-portal:${{ github.sha }}
 
       - name: Wait for Container App provisioning to complete
         run: |
@@ -69,7 +70,7 @@ jobs:
         with:
           containerAppName: staffing-agent
           resourceGroup: staffing-group
-          imageToDeploy: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}/staffing-agent:${{ github.sha }}
+          imageToDeploy: ${{ secrets.STAFFINGAGENT_REGISTRY_URL }}/staffing-portal:${{ github.sha }}
 
       - name: Ensure ingress target port is 8000
         run: |
